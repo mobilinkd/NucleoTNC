@@ -1,46 +1,17 @@
-/*
-*****************************************************************************
-**
-
-**  File        : stm32_flash.ld
-**
-**  Abstract    : Linker script for STM32L432KC Device with
-**                256KByte FLASH, 64KByte RAM
-**
-**                Set heap size, stack size and stack location according
-**                to application requirements.
-**
-**                Set memory bank area and size if external memory is used.
-**
-**  Target      : STMicroelectronics STM32
-**
-**  Environment : Atollic TrueSTUDIO(R)
-**
-**  Distribution: The file is distributed as is, without any warranty
-**                of any kind.
-**
-**  (c)Copyright Atollic AB.
-**  You may use this file as-is or modify it according to the needs of your
-**  project. This file may only be built (assembled or compiled and linked)
-**  using the Atollic TrueSTUDIO(R) product. The use of this file together
-**  with other tools than Atollic TrueSTUDIO(R) is not permitted.
-**
-*****************************************************************************
-*/
-
 /* Entry Point */
 ENTRY(Reset_Handler)
 
 /* Highest address of the user mode stack */
-_estack = 0x20010000;    /* end of RAM */
+_estack = 0x2000C000;    /* end of RAM */
 /* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size = 0x200;      /* required amount of heap  */
-_Min_Stack_Size = 0x400; /* required amount of stack */
+_Min_Heap_Size = 0x4000;      /* required amount of heap  */
+_Min_Stack_Size = 0x800; /* required amount of stack */
 
 /* Specify the memory areas */
 MEMORY
 {
-RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 64K
+RAM1 (xrw)      : ORIGIN = 0x20000000, LENGTH = 48K
+RAM2 (xrw)      : ORIGIN = 0x10000000, LENGTH = 16K
 FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 256K
 }
 
@@ -122,8 +93,39 @@ SECTIONS
 
     . = ALIGN(4);
     _edata = .;        /* define a global symbol at data end */
-  } >RAM AT> FLASH
+  } >RAM1 AT> FLASH
 
+  _sibss2 = LOADADDR(.bss2);
+
+  /* RAM2 section 
+  * 
+  * IMPORTANT NOTE! 
+  * If initialized variables will be placed in this section, 
+  * the startup code needs to be modified to copy the init-values.  
+  */
+  .bss2 :
+  {
+    . = ALIGN(4);
+    _sbss2 = .;       /* create a global symbol at ram2 start */
+    *(.bss2)
+    *(.bss2*)
+    
+    . = ALIGN(4);
+    _ebss2 = .;       /* create a global symbol at ram2 end */
+  }  >RAM2 AT> FLASH
+
+  _sibss3 = LOADADDR(.bss3);
+
+  .bss3 :
+  {
+    . = ALIGN(4);
+    _sbss3 = .;       /* create a global symbol at ram3 start */
+    *(.bss3)
+    *(.bss3*)
+    
+    . = ALIGN(4);
+    _ebss3 = .;       /* create a global symbol at ram3 end */
+  } >RAM2 AT> FLASH
   
   /* Uninitialized data section */
   . = ALIGN(4);
@@ -139,7 +141,7 @@ SECTIONS
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
-  } >RAM
+  } >RAM1
 
   /* User_heap_stack section, used to check that there is enough RAM left */
   ._user_heap_stack :
@@ -150,8 +152,10 @@ SECTIONS
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(4);
-  } >RAM
+  } >RAM1
 
+  _Heap_Begin = _end;
+  _Heap_Limit = _estack - _Min_Stack_Size;
   
 
   /* Remove information from the standard libraries */

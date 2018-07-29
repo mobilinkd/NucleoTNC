@@ -34,3 +34,4 @@
 # STM32CubeMX garbage files
 *.launch
 .settings/
+*.s
