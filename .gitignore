@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# STM32CubeMX garbage files
+*.launch
+.settings/
