@@ -284,6 +284,9 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+  HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
+  HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R, 1024);
+  HAL_OPAMP_Start(&hopamp1);
   /* USER CODE END RTOS_QUEUES */
  
 
@@ -816,6 +819,7 @@ void startDefaultTask(void const * argument)
 {
 
   /* USER CODE BEGIN 5 */
+
   /* Infinite loop */
   for(;;)
   {

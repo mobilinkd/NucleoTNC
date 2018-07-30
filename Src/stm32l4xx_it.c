@@ -37,6 +37,9 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN 0 */
+#include "main.h"
+
+extern osMessageQId ioEventQueueHandle;
 
 /* USER CODE END 0 */
 
@@ -82,7 +85,10 @@ void SysTick_Handler(void)
 void EXTI1_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI1_IRQn 0 */
-
+  if (HAL_GPIO_ReadPin(BUTTON_AUDIO_IN_ADJUST_GPIO_Port, BUTTON_AUDIO_IN_ADJUST_Pin))
+      osMessagePut(ioEventQueueHandle, CMD_USER_BUTTON_UP, 0);
+  else
+      osMessagePut(ioEventQueueHandle, CMD_USER_BUTTON_DOWN, 0);
   /* USER CODE END EXTI1_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
   /* USER CODE BEGIN EXTI1_IRQn 1 */
@@ -180,7 +186,11 @@ void TIM2_IRQHandler(void)
 void USART2_IRQHandler(void)
 {
   /* USER CODE BEGIN USART2_IRQn 0 */
-
+    if (__HAL_UART_GET_FLAG(&huart2, UART_FLAG_IDLE)) {
+        idleInterruptCallback(&huart2);
+        __HAL_UART_CLEAR_FLAG(&huart2, UART_FLAG_IDLE);
+        return;
+    }
   /* USER CODE END USART2_IRQn 0 */
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */

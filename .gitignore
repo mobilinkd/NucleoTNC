@@ -30,6 +30,8 @@
 *.exe
 *.out
 *.app
+ARM_Debug/
+ARM_Release/
 
 # STM32CubeMX garbage files
 *.launch

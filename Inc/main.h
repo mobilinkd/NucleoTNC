@@ -98,6 +98,11 @@
 
 /* USER CODE BEGIN Private defines */
 
+#define CMD_USER_BUTTON_DOWN 1
+#define CMD_USER_BUTTON_UP 2
+#define CMD_SET_PTT_SIMPLEX 3
+#define CMD_SET_PTT_MULTIPLEX 4
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
