@@ -123,7 +123,6 @@ struct Demodulator {
     , nrzi_(), hdlc_decoder_(false), locked_(false)
     {}
 
-    // hdlc::IoFrame* operator()(float* samples, size_t len) __attribute__((section(".bss2")));
     hdlc::IoFrame* operator()(float* samples, size_t len);
 
     bool locked() const {return locked_;}

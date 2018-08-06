@@ -4,6 +4,8 @@
 #ifndef MOBILINKD__TNC__GOERTZEL_FILTER_HPP_
 #define MOBILINKD__TNC__GOERTZEL_FILTER_HPP_
 
+#include "AudioLevel.hpp"
+
 #include <arm_math.h>
 #include <complex>
 
@@ -17,17 +19,17 @@ class GoertzelFilter
 	float filterFreq_;
 	int bin_;
 	float coeff_;
-  float d1{0.0f};
-  float d2{0.0f};
-  uint32_t count{0};
-  const float* window_;
+	float d1{0.0f};
+	float d2{0.0f};
+	uint32_t count{0};
+	const float* window_;
 	
 public:
 	GoertzelFilter(float filter_freq, const float* window = WINDOW)
 	: filterFreq_(filter_freq)
 	, bin_(0.5f + ((filter_freq * SAMPLES) / SAMPLE_RATE))
 	, coeff_(2.0f * cos((2.0f * M_PI * bin_) / float(SAMPLES)))
-  , window_(window)
+    , window_(window)
 	{}
 	
 	void operator()(float* samples, uint32_t n) {
@@ -45,7 +47,7 @@ public:
 
     for (uint32_t i = 0; i != n; ++i) {
         float w = window_ ? window_[count] : 1.0;
-        float sample = (float(samples[i]) - 2048.0f) / 2048.0f;
+        float sample = (float(samples[i]) - audio::virtual_ground) * audio::i_vgnd;
         float y = w * sample + coeff_ * d1 - d2;
         d2 = d1;
         d1 = y;

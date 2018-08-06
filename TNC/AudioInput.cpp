@@ -437,6 +437,7 @@ void demodulatorTask() {
     bool dcd_status{false};
 
     while (true) {
+        mobilinkd::tnc::gpio::LD3::off();
         osEvent peek = osMessagePeek(audioInputQueueHandle, 0);
         if (peek.status == osEventMessage) break;
 
@@ -445,6 +446,7 @@ void demodulatorTask() {
             continue;
         }
         ++counter;
+        mobilinkd::tnc::gpio::LD3::on();
 
         auto block = (adc_pool_type::chunk_type*) evt.value.p;
         auto samples = (int16_t*) block->buffer;
@@ -536,8 +538,8 @@ void streamLevels(uint32_t channel, uint8_t cmd) {
 
         uint16_t count = 0;
         uint32_t accum = 0;
-        uint16_t min = 4096;
-        uint16_t max = 0;
+        uint16_t min = std::numeric_limits<uint16_t>::max();
+        uint16_t max = std::numeric_limits<uint16_t>::min();
 
         while (count < 2640) {
             osEvent evt = osMessageGet(adcInputQueueHandle, osWaitForever);
@@ -547,7 +549,7 @@ void streamLevels(uint32_t channel, uint8_t cmd) {
 
             auto block = (adc_pool_type::chunk_type*) evt.value.p;
             uint16_t* start =  (uint16_t*) block->buffer;
-            uint16_t* end = (uint16_t*) block->buffer + ADC_BUFFER_SIZE;
+            uint16_t* end = start + ADC_BUFFER_SIZE;
 
             min = std::min(min, *std::min_element(start, end));
             max = std::max(max, *std::max_element(start, end));
@@ -586,8 +588,8 @@ levels_type readLevels(uint32_t channel, uint32_t samples) {
 
     uint16_t count = 0;
     uint32_t accum = 0;
-    uint16_t vmin = 4096;
-    uint16_t vmax = 0;
+    uint16_t vmin = std::numeric_limits<uint16_t>::max();
+    uint16_t vmax = std::numeric_limits<uint16_t>::min();
 
     INFO("readLevels: start");
     startADC(channel);
@@ -597,17 +599,19 @@ levels_type readLevels(uint32_t channel, uint32_t samples) {
         osEvent evt = osMessageGet(adcInputQueueHandle, osWaitForever);
         if (evt.status != osEventMessage) continue;
 
-        count += ADC_BUFFER_SIZE;
+        auto block = (adc_pool_type::chunk_type*) evt.value.p;
+        auto start =  reinterpret_cast<uint16_t*>(block->buffer);
+        auto end = start + ADC_BUFFER_SIZE;
 
-        auto block = (adc_pool_type::chunk_type*) evt.value.v;
-        uint16_t* start =  (uint16_t*) block->buffer;
-        uint16_t* end = (uint16_t*) block->buffer + ADC_BUFFER_SIZE;
+//        if (count == 0) for (auto it = start; it != end; ++it) DEBUG("%hu\n", *it);
 
         vmin = std::min(vmin, *std::min_element(start, end));
         vmax = std::max(vmax, *std::max_element(start, end));
         accum = std::accumulate(start, end, accum);
 
         adcPool.deallocate(block);
+
+        count += ADC_BUFFER_SIZE;
     }
 
     stopADC();
@@ -619,8 +623,10 @@ levels_type readLevels(uint32_t channel, uint32_t samples) {
     return levels_type(pp, avg, vmin, vmax);
 }
 
-
-constexpr uint32_t TWIST_SAMPLE_SIZE = 264 * 5;
+/**
+ * This provides 100Hz resolution to the Goerztel filter.
+ */
+constexpr uint32_t TWIST_SAMPLE_SIZE = 88;
 
 /*
  * Return twist as a the difference in dB between mark and space.  The
@@ -636,10 +642,10 @@ float readTwist()
   float g1200 = 0.0f;
   float g2200 = 0.0f;
 
-  GoertzelFilter<TWIST_SAMPLE_SIZE, SAMPLE_RATE> gf1200(1200.0);
-  GoertzelFilter<TWIST_SAMPLE_SIZE, SAMPLE_RATE> gf2200(2200.0);
+  GoertzelFilter<TWIST_SAMPLE_SIZE, SAMPLE_RATE> gf1200(1200.0, 0);
+  GoertzelFilter<TWIST_SAMPLE_SIZE, SAMPLE_RATE> gf2200(2200.0, 0);
 
-  const uint32_t AVG_SAMPLES = 100;
+  const uint32_t AVG_SAMPLES = 20;
 
   startADC(channel);
 
@@ -661,17 +667,24 @@ float readTwist()
         adcPool.deallocate(block);
     }
 
-    g1200 += 10.0 * log10(gf1200);
-    g2200 += 10.0 * log10(gf2200);
+    g1200 += (gf1200 / count);
+    g2200 += (gf2200 / count);
 
     gf1200.reset();
     gf2200.reset();
   }
 
   stopADC();
-  DEBUG("exit readTwist");
 
-  return   (g1200 / AVG_SAMPLES) - (g2200 / AVG_SAMPLES);
+  g1200 = 10.0f * log10f(g1200 / AVG_SAMPLES);
+  g2200 = 10.0f * log10f(g2200 / AVG_SAMPLES);
+
+  auto result = g1200 - g2200;
+
+  INFO("Twist = %d / 100 (%d - %d)", int(result*100), int(g1200), int(g2200));
+
+  DEBUG("exit readTwist");
+  return result;
 }
 
 /*

@@ -42,6 +42,7 @@ typedef GPIO<(uint32_t)GPIOA_BASE,LED_RED_Pin> LED_TX;
 typedef GPIO<(uint32_t)GPIOA_BASE,LED_GREEN_Pin> LED_DCD;
 typedef GPIO<(uint32_t)GPIOA_BASE,LED_YELLOW_Pin> LED_OTHER;
 typedef GPIO<(uint32_t)GPIOB_BASE,AUDIO_OUT_ATTEN_Pin> AUDIO_OUT_ATTEN;
+typedef GPIO<(uint32_t)GPIOB_BASE,LD3_Pin> LD3;
 
 }}} // mobilinkd::tnc::gpio
 

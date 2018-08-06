@@ -24,25 +24,25 @@ extern DAC_HandleTypeDef hdac1;
 namespace mobilinkd { namespace tnc { namespace audio {
 
 uint16_t virtual_ground;
+float i_vgnd;
 
 void setAudioPins(void) {
     GPIO_InitTypeDef GPIO_InitStruct;
 
-    GPIO_InitStruct.Pin = GPIO_PIN_3;
+    GPIO_InitStruct.Pin = AUDIO_IN_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    HAL_GPIO_Init(AUDIO_IN_GPIO_Port, &GPIO_InitStruct);
 }
 
 void set_input_gain(int level)
 {
     uint32_t dc_offset{};
 
-    if (HAL_OPAMP_DeInit(&hopamp1) != HAL_OK)
-    {
+    if (HAL_OPAMP_Stop(&hopamp1) != HAL_OK)
         Error_Handler();
-    }
-
+    if (HAL_OPAMP_DeInit(&hopamp1) != HAL_OK)
+        Error_Handler();
 
     switch (level) {
     case 0: // 0dB
@@ -73,49 +73,57 @@ void set_input_gain(int level)
         Error_Handler();
     }
 
-    HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R, dc_offset);
+    if (HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R, dc_offset) != HAL_OK)
+        Error_Handler();
 
     if (HAL_OPAMP_Init(&hopamp1) != HAL_OK)
-    {
         Error_Handler();
-    }
-    HAL_OPAMP_Start(&hopamp1);
-    osDelay(100);
+
+    if (HAL_OPAMP_Start(&hopamp1)!= HAL_OK)
+        Error_Handler();
+
+//    setAudioPins();
+    osDelay(300);
 }
 
 int adjust_input_gain() __attribute__((noinline));
 
 int adjust_input_gain() {
 
-    INFO("Adjusting input gain...");
+    INFO("\nAdjusting input gain...\n");
 
     int gain{0};
 
-    while (true) {
-        set_input_gain(gain);
+    set_input_gain(gain);
+    auto [vpp, vavg, vmin, vmax] = readLevels(AUDIO_IN);
+    INFO("\nVpp = %" PRIu16 ", Vavg = %" PRIu16 "\n", vpp, vavg);
+    INFO("\nVmin = %" PRIu16 ", Vmax = %" PRIu16 ", setting = %d\n", vmin, vmax, gain);
 
-        auto [vpp, vavg, vmin, vmax] = readLevels(AUDIO_IN);
+    while (gain == 0 and (vmax == vref or vmin == 0))
+    {
+        gpio::LED_OTHER::toggle();
+        std::tie(vpp, vavg, vmin, vmax) = readLevels(AUDIO_IN);
 
-        INFO("Vpp = %" PRIu16 ", Vavg = %" PRIu16, vpp, vavg);
-        INFO("Vmin = %" PRIu16 ", Vmax = %" PRIu16 ", setting = %d", vmin, vmax, gain);
-
-        while (gain == 0 and (vmax > 4090 or vmin < 5)) {
-
-            gpio::LED_OTHER::toggle();
-            std::tie(vpp, vavg, vmin, vmax) = readLevels(AUDIO_IN);
-
-            INFO("Vpp = %" PRIu16 ", Vavg = %" PRIu16 ", Vmin = %" PRIu16
-                ", Vmax = %" PRIu16 ", setting = %d", vpp, vavg, vmin, vmax, gain);
-
-        }
-        gpio::LED_OTHER::off();
-
-        virtual_ground = vavg;
-
-        if (vpp > 2048) break;
-        if (gain == 4) break;
-        ++gain;
+        INFO("\nVpp = %" PRIu16 ", Vavg = %" PRIu16 "\n", vpp, vavg);
+        INFO("\nVmin = %" PRIu16 ", Vmax = %" PRIu16 ", setting = %d\n", vmin, vmax, gain);
     }
+
+    auto desired_gain = vref / vpp;
+
+    if (desired_gain >= 16) gain = 4;
+    else if (desired_gain >= 8) gain = 3;
+    else if (desired_gain >= 4) gain = 2;
+    else if (desired_gain >= 2) gain = 1;
+    else gain = 0;
+
+    set_input_gain(gain);
+    std::tie(vpp, vavg, vmin, vmax) = readLevels(AUDIO_IN);
+    INFO("\nVpp = %" PRIu16 ", Vavg = %" PRIu16 "\n", vpp, vavg);
+    INFO("\nVmin = %" PRIu16 ", Vmax = %" PRIu16 ", setting = %d\n", vmin, vmax, gain);
+
+    virtual_ground = vavg;
+    i_vgnd = 1.0 / virtual_ground;
+
     gpio::LED_OTHER::on();
 
     return gain;
@@ -152,6 +160,11 @@ void setAudioInputLevels()
     // setAudioPins();
     INFO("Setting input gain: %d", kiss::settings().input_gain);
     set_input_gain(kiss::settings().input_gain);
+    auto [vpp, vavg, vmin, vmax] = readLevels(AUDIO_IN);
+    INFO("Vpp = %" PRIu16 ", Vavg = %" PRIu16, vpp, vavg);
+    INFO("Vmin = %" PRIu16 ", Vmax = %" PRIu16 ", setting = %d", vmin, vmax, 2);
+    virtual_ground = vavg;
+    i_vgnd = 1.0 / virtual_ground;
 }
 
 std::array<int16_t, 128> log_volume;

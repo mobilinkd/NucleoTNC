@@ -65,7 +65,7 @@ void TNC_Error_Handler(int dev, int err);
 
 namespace mobilinkd { namespace tnc { namespace audio {
 
-const uint32_t SAMPLE_RATE = 26400;
+constexpr const uint32_t SAMPLE_RATE = 26400;
 
 enum AdcState {
     STOPPED,                        // STOP MODE, wait for comparator
@@ -89,33 +89,35 @@ const size_t DMA_TRANSFER_SIZE = ADC_BUFFER_SIZE / 2;
 extern uint32_t adc_buffer[];       // Two int16_t samples per element.
 
 inline void stopADC() {
-    HAL_ADC_Stop_DMA(&hadc1);
-    HAL_TIM_Base_Stop(&htim6);
+    if (HAL_ADC_Stop_DMA(&hadc1) != HAL_OK)
+        Error_Handler();
+    if (HAL_TIM_Base_Stop(&htim6) != HAL_OK)
+        Error_Handler();
 }
 
 inline void startADC(uint32_t channel) {
     ADC_ChannelConfTypeDef sConfig;
 
     sConfig.Channel = channel;
-    sConfig.Rank = 1;
+    sConfig.Rank = ADC_REGULAR_RANK_1;
     sConfig.SingleDiff = ADC_SINGLE_ENDED;
     sConfig.SamplingTime = ADC_SAMPLETIME_24CYCLES_5;
     sConfig.OffsetNumber = ADC_OFFSET_NONE;
     sConfig.Offset = 0;
-    HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+    if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+        Error_Handler();
 
-    HAL_StatusTypeDef adcStatus = HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
-    if (adcStatus != HAL_OK) {
-      Error_Handler();
-    }
-
-    HAL_TIM_Base_Start(&htim6);
-    HAL_ADC_Start_DMA(&hadc1, adc_buffer, ADC_BUFFER_SIZE * 2);
+    if (HAL_TIM_Base_Start(&htim6) != HAL_OK)
+        Error_Handler();
+    if (HAL_ADC_Start_DMA(&hadc1, adc_buffer, ADC_BUFFER_SIZE * 2) != HAL_OK)
+        Error_Handler();
 }
 
 inline void restartADC() {
-    HAL_TIM_Base_Start(&htim6);
-    HAL_ADC_Start_DMA(&hadc1, adc_buffer, ADC_BUFFER_SIZE * 2);
+    if (HAL_TIM_Base_Start(&htim6) != HAL_OK)
+        Error_Handler();
+    if (HAL_ADC_Start_DMA(&hadc1, adc_buffer, ADC_BUFFER_SIZE * 2) != HAL_OK)
+        Error_Handler();
 }
 
 /// Vpp, Vavg, Vmin, Vmax

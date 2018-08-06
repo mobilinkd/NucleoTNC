@@ -61,12 +61,12 @@
 
 #define VCP_TX_Pin GPIO_PIN_2
 #define VCP_TX_GPIO_Port GPIOA
+#define AUDIO_IN_Pin GPIO_PIN_3
+#define AUDIO_IN_GPIO_Port GPIOA
 #define AUDIO_OUT_DAC_Pin GPIO_PIN_4
 #define AUDIO_OUT_DAC_GPIO_Port GPIOA
 #define AUDIO_IN_VREF_Pin GPIO_PIN_5
 #define AUDIO_IN_VREF_GPIO_Port GPIOA
-#define AUDIO_OUT_ATTEN_Pin GPIO_PIN_0
-#define AUDIO_OUT_ATTEN_GPIO_Port GPIOB
 #define BUTTON_AUDIO_IN_ADJUST_Pin GPIO_PIN_1
 #define BUTTON_AUDIO_IN_ADJUST_GPIO_Port GPIOB
 #define BUTTON_AUDIO_IN_ADJUST_EXTI_IRQn EXTI1_IRQn
@@ -88,6 +88,8 @@
 #define VCP_RX_GPIO_Port GPIOA
 #define LD3_Pin GPIO_PIN_3
 #define LD3_GPIO_Port GPIOB
+#define AUDIO_OUT_ATTEN_Pin GPIO_PIN_5
+#define AUDIO_OUT_ATTEN_GPIO_Port GPIOB
 
 /* ########################## Assert Selection ############################## */
 /**

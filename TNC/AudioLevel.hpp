@@ -6,6 +6,7 @@
 
 #include "arm_math.h"
 #include "cmsis_os.h"
+#include "stm32l4xx_hal.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,7 +18,7 @@ extern osMessageQId audioInputQueueHandle;
 }
 #endif
 
-#define AUDIO_IN ADC_CHANNEL_8
+constexpr const uint32_t AUDIO_IN = ADC_CHANNEL_8;
 
 namespace mobilinkd { namespace tnc { namespace audio {
 
@@ -27,7 +28,9 @@ void setAudioInputLevels();
 void setAudioOutputLevel();
 
 extern bool streamInputDCOffset;
+constexpr const uint16_t vref = 16383; // Must match ADC output (adjust when oversampling)
 extern uint16_t virtual_ground;
+extern float i_vgnd;
 
 }}} // mobilinkd::tnc::audio
 

@@ -74,7 +74,7 @@ struct FirFilter {
     float* operator()(int16_t* input) // __attribute__((section(".bss2")))
     {
         for (size_t i = 0; i != BLOCK_SIZE; i++) {
-            filter_input[i] = (float(input[i]) - vgnd_) * 0.00048828125f;
+            filter_input[i] = (float(input[i]) - vgnd_) * audio::i_vgnd;
         }
         arm_fir_f32(&instance, filter_input, filter_output, BLOCK_SIZE);
         return filter_output;
