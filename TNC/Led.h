@@ -41,28 +41,29 @@ struct Led
   {}
 
   void on() {
-    taskENTER_CRITICAL();
+    auto x = taskENTER_CRITICAL_FROM_ISR();
     ++count_;
     if (count_ == 1) {
       HAL_GPIO_WritePin(GPIOx_, pin_, GPIO_PIN_RESET);
     }
-    taskEXIT_CRITICAL();
+    taskEXIT_CRITICAL_FROM_ISR(x);
   }
 
   void off() {
-    taskENTER_CRITICAL();
+    auto x = taskENTER_CRITICAL_FROM_ISR();
     if (count_ > 0) --count_;
     if (count_ == 0) {
       HAL_GPIO_WritePin(GPIOx_, pin_, GPIO_PIN_SET);
     }
-    taskEXIT_CRITICAL();
+    taskEXIT_CRITICAL_FROM_ISR(x);
   }
 
   void toggle() {
+    auto x = taskENTER_CRITICAL_FROM_ISR();
     taskENTER_CRITICAL();
     HAL_GPIO_TogglePin(GPIOx_, pin_);
     count_ = 0;
-    taskEXIT_CRITICAL();
+    taskEXIT_CRITICAL_FROM_ISR(x);
   }
 
   uint32_t status() const {return count_;}
