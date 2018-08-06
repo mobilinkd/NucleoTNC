@@ -146,7 +146,7 @@ void autoAudioInputLevel()
     mobilinkd::tnc::kiss::settings().rx_twist = rx_twist;
     mobilinkd::tnc::kiss::settings().update_crc();
 
-    //mobilinkd::tnc::kiss::settings().store();
+    mobilinkd::tnc::kiss::settings().store();
 
     led_tx_off();
     led_dcd_off();

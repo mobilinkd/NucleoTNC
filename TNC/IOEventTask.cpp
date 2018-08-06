@@ -28,9 +28,12 @@ void startIOEventTask(void const*)
   mobilinkd::tnc::audio::init_log_volume();
   mobilinkd::tnc::print_startup_banner();
 
+
   auto& hardware = mobilinkd::tnc::kiss::settings();
-  if (!hardware.crc_ok()) hardware.init();
-  // if (!hardware.load()) hardware.store();
+  if (!hardware.crc_ok()) {
+      hardware.init();
+      if (!hardware.load()) hardware.store();
+  }
   hardware.debug();
   strcpy((char*)hardware.mycall, "WX9O");
   hardware.update_crc();

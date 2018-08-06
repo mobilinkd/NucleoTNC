@@ -474,7 +474,7 @@ bool I2C_Storage::store(const void* ptr, size_t len)
     size_t remaining = len;
     while (remaining > page_size)
     {
-        auto result = HAL_I2C_Mem_Write_DMA(&hi2c3, i2c_address << 8, index, I2C_MEMADD_SIZE_16BIT, tmp + index, page_size);
+        auto result = HAL_I2C_Mem_Write_DMA(&hi2c3, i2c_address, index, I2C_MEMADD_SIZE_16BIT, tmp + index, page_size);
         if (result == HAL_BUSY)
         {
             if (osKernelSysTick() > start + timeout) return false;
