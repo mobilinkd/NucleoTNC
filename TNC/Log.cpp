@@ -16,10 +16,10 @@ void log_(int level, const char* fmt, ...)
   va_end(args);
 
   if (len >= 0) {
-      mobilinkd::tnc::ioport->write((uint8_t*)buffer, len, 10);
+      mobilinkd::tnc::ioport->write((uint8_t*)buffer, len, 7, 10);
       free(buffer);
   } else {
-      mobilinkd::tnc::ioport->write((uint8_t*) "Allocation Error\r\n", 18, 10);
+      mobilinkd::tnc::ioport->write((uint8_t*) "Allocation Error\r\n", 18, 7, 10);
   }
 }
 
