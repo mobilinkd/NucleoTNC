@@ -80,14 +80,14 @@ void startIOEventTask(void const*)
 
     switch (frame->source()) {
     case IoFrame::RF_DATA:
-      DEBUG("RF frame");
+//      DEBUG("RF frame");
       if (!mobilinkd::tnc::ioport->write(frame, 100)) {
         ERROR("Timed out sending frame");
         mobilinkd::tnc::hdlc::release(frame);
       }
       break;
     case IoFrame::SERIAL_DATA:
-      DEBUG("Serial frame");
+//      DEBUG("Serial frame");
       if ((frame->type() & 0x0F) == IoFrame::DATA) {
         if (osMessagePut(hdlcOutputQueueHandle, reinterpret_cast<uint32_t>(frame),
           osWaitForever) != osOK) {
@@ -99,7 +99,7 @@ void startIOEventTask(void const*)
       }
       break;
     case IoFrame::DIGI_DATA:
-      DEBUG("Digi frame");
+//      DEBUG("Digi frame");
       if (osMessagePut(hdlcOutputQueueHandle, reinterpret_cast<uint32_t>(frame),
         osWaitForever) != osOK) {
         mobilinkd::tnc::hdlc::release(frame);

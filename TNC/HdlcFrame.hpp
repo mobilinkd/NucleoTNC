@@ -72,7 +72,7 @@ private:
         checksum <<= 16;     // Shift
         asm volatile("rbit %0, %0" : "+r" (checksum)); // Reverse
         uint16_t result = checksum & 0xFFFF;
-        DEBUG("CRC = %hx", result);
+//        DEBUG("CRC = %hx", result);
         return result;
     }
 #else
@@ -133,7 +133,7 @@ public:
         fcs_ = (*it);
         ++it;
         fcs_ |= (*it) << 8;
-        DEBUG("FCS = %hx", fcs_);
+//        DEBUG("FCS = %hx", fcs_);
         crc_ = compute_crc(data_.begin());
         complete_ = true;
     }
