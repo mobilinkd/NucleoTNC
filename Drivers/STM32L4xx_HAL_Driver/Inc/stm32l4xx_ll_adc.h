@@ -4856,7 +4856,7 @@ __STATIC_INLINE void LL_ADC_SetChannelSingleDiff(ADC_TypeDef *ADCx, uint32_t Cha
   /* differential mode (for single mode, mask of bits allowed to be set is    */
   /* shifted out of range of bits of channels in single or differential mode. */
   MODIFY_REG(ADCx->DIFSEL,
-             Channel & ADC_SINGLEDIFF_CHANNEL_MASK,
+             Channel & ADC_SINGLEDIFF_CHANNEL_MASK, SingleDiff == LL_ADC_SINGLE_ENDED ? 0 :
              (Channel & ADC_SINGLEDIFF_CHANNEL_MASK) & (ADC_DIFSEL_DIFSEL << (SingleDiff & ADC_SINGLEDIFF_CHANNEL_SHIFT_MASK)));
 }
 
