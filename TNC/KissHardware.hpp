@@ -129,10 +129,15 @@ const uint8_t EXT_GET_BEACONS = 12;   ///< Number of beacons supported
 const uint8_t EXT_GET_BEACON = 13;    ///< Beacon number (uint8_t), uint16_t interval in seconds, 3 NUL terminated strings (callsign, path, text)
 const uint8_t EXT_SET_BEACON = 14;    ///< Beacon number (uint8_t), uint16_t interval in seconds, 3 NUL terminated strings (callsign, path, text)
 
-const uint8_t MODEM_TYPE_1200 = 1;
-const uint8_t MODEM_TYPE_300 = 2;
-const uint8_t MODEM_TYPE_9600 = 3;
-const uint8_t MODEM_TYPE_PSK31 = 4;
+constexpr const uint8_t EXT_GET_MYCALL = 16;    ///< MYCALL callsign = 8 characters. right padded with NUL.
+constexpr const uint8_t EXT_SET_MYCALL = 17;    ///< MYCALL callsign = 8 characters. right padded with NUL.
+
+constexpr const uint8_t MODEM_TYPE_1200 = 1;
+constexpr const uint8_t MODEM_TYPE_300 = 2;
+constexpr const uint8_t MODEM_TYPE_9600 = 3;
+constexpr const uint8_t MODEM_TYPE_PSK31 = 4;
+constexpr const uint8_t MODEM_TYPE_OFDM = 5;
+constexpr const uint8_t MODEM_TYPE_MFSK16 = 6;
 
 // Boolean options.
 #define KISS_OPTION_CONN_TRACK      0x01
@@ -141,7 +146,7 @@ const uint8_t MODEM_TYPE_PSK31 = 4;
 #define KISS_OPTION_VIN_POWER_OFF   0x08  // Power off when plugged in to USB
 #define KISS_OPTION_PTT_SIMPLEX     0x10  // Simplex PTT (the default)
 
-const char TOCALL[] = "APML50"; // Update for every feature change.
+const char TOCALL[] = "APML00"; // Update for every feature change.
 
 } // hardware
 
