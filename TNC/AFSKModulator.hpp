@@ -69,17 +69,16 @@ struct AFSKModulator {
     static const size_t MARK_SKIP = 12;
     static const size_t SPACE_SKIP = 22;
 
-    size_t pos_;
-    int running_;
+    size_t pos_{0};
+    int running_{-1};
     osMessageQId dacOutputQueueHandle_;
     PTT* ptt_;
-    uint8_t twist_;
+    uint8_t twist_{50};
     uint16_t volume_{4096};
     uint16_t buffer_[DAC_BUFFER_LEN];
 
     AFSKModulator(osMessageQId queue, PTT* ptt)
-    : pos_(0), running_(-1), dacOutputQueueHandle_(queue), ptt_(ptt)
-    , twist_(50), buffer_()
+    : dacOutputQueueHandle_(queue), ptt_(ptt)
     {
         for (size_t i = 0; i != DAC_BUFFER_LEN; i++)
             buffer_[i] = 2048;
@@ -105,17 +104,22 @@ struct AFSKModulator {
     void set_twist(uint8_t twist) {twist_ = twist;}
 
     void send(bool bit) {
-        if (running_ != 1) {
+        switch (running_) {
+        case -1:
+            fill_first(bit);
+            running_ = 0;
+            break;
+        case 0:
+            fill_last(bit);
+            running_ = 1;
+            ptt_->on();
+            HAL_TIM_Base_Start(&htim7);
+            HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, (uint32_t*) buffer_, DAC_BUFFER_LEN, DAC_ALIGN_12B_R);
+            break;
+        case 1:
             osMessagePut(dacOutputQueueHandle_, bit, osWaitForever);
-            running_ += 1;
-            if (running_ == 1) {
-                ptt_->on();
-                HAL_TIM_Base_Start(&htim7);
-                HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, (uint32_t*) buffer_, DAC_BUFFER_LEN, DAC_ALIGN_12B_R);
-            }
+            break;
         }
-
-        osMessagePut(dacOutputQueueHandle_, bit, osWaitForever);
     }
 
     void fill(uint16_t* buffer, bool bit) {
@@ -154,13 +158,19 @@ struct AFSKModulator {
     }
 
     void empty() {
-        if (running_ != -1) {
-            --running_;
-            if (running_ == -1) {
-                HAL_DAC_Stop_DMA(&hdac1, DAC_CHANNEL_1);
-                HAL_TIM_Base_Stop(&htim7);
-                ptt_->off();
-            }
+        switch (running_) {
+        case 1:
+            running_ = 0;
+            break;
+        case 0:
+            running_ = -1;
+            HAL_DAC_Stop_DMA(&hdac1, DAC_CHANNEL_1);
+            HAL_TIM_Base_Stop(&htim7);
+            ptt_->off();
+            pos_ = 0;
+            break;
+        case -1:
+            break;
         }
     }
 
@@ -169,8 +179,9 @@ struct AFSKModulator {
         HAL_DAC_Stop_DMA(&hdac1, DAC_CHANNEL_1);
         HAL_TIM_Base_Stop(&htim7);
         ptt_->off();
-        // Drain the queue.
+        pos_ = 0;
 
+        // Drain the queue.
         while (osMessageGet(dacOutputQueueHandle_, 0).status == osEventMessage);
     }
 };
