@@ -60,7 +60,6 @@ struct Led
 
   void toggle() {
     auto x = taskENTER_CRITICAL_FROM_ISR();
-    taskENTER_CRITICAL();
     HAL_GPIO_TogglePin(GPIOx_, pin_);
     count_ = 0;
     taskEXIT_CRITICAL_FROM_ISR(x);
