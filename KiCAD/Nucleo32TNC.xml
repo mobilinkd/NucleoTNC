@@ -1,0 +1,839 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<export version="D">
+  <design>
+    <source>/home/rob/NucleoTNC/Nucleo32TNC/Nucleo32TNC.sch</source>
+    <date>Sat 15 Jun 2019 06:41:44 PM CDT</date>
+    <tool>Eeschema 6.0.0-unknown-r15878-27d097a7</tool>
+    <sheet number="1" name="/" tstamps="/">
+      <title_block>
+        <title>Nucleo32 TNC</title>
+        <company>Mobilinkd TNC</company>
+        <rev>A</rev>
+        <date>2019-06-13</date>
+        <source>Nucleo32TNC.sch</source>
+        <comment number="1" value="Breadboard TNC Project"/>
+        <comment number="2" value="STM32L432 Nucleo32 Board"/>
+        <comment number="3" value=""/>
+        <comment number="4" value=""/>
+      </title_block>
+    </sheet>
+  </design>
+  <components>
+    <comp ref="A1">
+      <value>NUCLEO-L432KC</value>
+      <footprint>MODULE_NUCLEO-F303K8</footprint>
+      <datasheet>NUCLEO-L432KC</datasheet>
+      <fields>
+        <field name="Field4">Unavailable</field>
+        <field name="Field5">None</field>
+        <field name="Field6">STM32 Nucleo-32 development board with STM32L432KC MCU, supports Arduino connectivity</field>
+        <field name="Field7">STMicroelectronics</field>
+        <field name="Field8">None</field>
+      </fields>
+      <libsource lib="NUCLEO-F303K8" part="NUCLEO-F303K8" description=""/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D02FE05</tstamp>
+    </comp>
+    <comp ref="U1">
+      <value>MCP6004</value>
+      <datasheet>http://ww1.microchip.com/downloads/en/DeviceDoc/21733j.pdf</datasheet>
+      <libsource lib="Amplifier_Operational" part="MCP6004" description="1MHz, Low-Power Op Amp, DIP-14/SOIC-14/TSSOP-14"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D03274D</tstamp>
+    </comp>
+    <comp ref="U2">
+      <value>24LC32</value>
+      <datasheet>http://ww1.microchip.com/downloads/en/DeviceDoc/21072G.pdf</datasheet>
+      <libsource lib="Memory_EEPROM" part="24LC32" description="I2C Serial EEPROM, 32Kb, DIP-8/SOIC-8/TSSOP-8/DFN-8"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D03BA26</tstamp>
+    </comp>
+    <comp ref="Q2">
+      <value>2N7000</value>
+      <footprint>Package_TO_SOT_THT:TO-92_Inline</footprint>
+      <datasheet>https://www.fairchildsemi.com/datasheets/2N/2N7000.pdf</datasheet>
+      <libsource lib="Transistor_FET" part="2N7000" description="0.2A Id, 200V Vds, N-Channel MOSFET, 2.6V Logic Level, TO-92"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D03DD0B</tstamp>
+    </comp>
+    <comp ref="D1">
+      <value>BAT85</value>
+      <footprint>Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal</footprint>
+      <datasheet>https://assets.nexperia.com/documents/data-sheet/BAT85.pdf</datasheet>
+      <libsource lib="Diode" part="BAT85" description="30V 0.2A Schottky barrier single diode, DO-35"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D0407E7</tstamp>
+    </comp>
+    <comp ref="D2">
+      <value>BAT85</value>
+      <footprint>Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal</footprint>
+      <datasheet>https://assets.nexperia.com/documents/data-sheet/BAT85.pdf</datasheet>
+      <libsource lib="Diode" part="BAT85" description="30V 0.2A Schottky barrier single diode, DO-35"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D0412DB</tstamp>
+    </comp>
+    <comp ref="D3">
+      <value>GRN LED</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="LED" description="Light emitting diode"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D041E6B</tstamp>
+    </comp>
+    <comp ref="D4">
+      <value>RED LED</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="LED" description="Light emitting diode"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D0428B1</tstamp>
+    </comp>
+    <comp ref="R18">
+      <value>2K2</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D054D69</tstamp>
+    </comp>
+    <comp ref="R4">
+      <value>2K2</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D055D35</tstamp>
+    </comp>
+    <comp ref="R17">
+      <value>2K2</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D0CE764</tstamp>
+    </comp>
+    <comp ref="R20">
+      <value>R470</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D0CE779</tstamp>
+    </comp>
+    <comp ref="R19">
+      <value>R470</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D0D60AA</tstamp>
+    </comp>
+    <comp ref="J1">
+      <value>AudioJack4</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Connector" part="AudioJack4" description="Audio Jack, 4 Poles (TRRS)"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D139C37</tstamp>
+    </comp>
+    <comp ref="Q1">
+      <value>2N7000</value>
+      <footprint>Package_TO_SOT_THT:TO-92_Inline</footprint>
+      <datasheet>https://www.fairchildsemi.com/datasheets/2N/2N7000.pdf</datasheet>
+      <libsource lib="Transistor_FET" part="2N7000" description="0.2A Id, 200V Vds, N-Channel MOSFET, 2.6V Logic Level, TO-92"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D03D2A2</tstamp>
+    </comp>
+    <comp ref="R6">
+      <value>220</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D09B7CD</tstamp>
+    </comp>
+    <comp ref="R13">
+      <value>220</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D0A70DE</tstamp>
+    </comp>
+    <comp ref="R5">
+      <value>100K</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D0AB32F</tstamp>
+    </comp>
+    <comp ref="R11">
+      <value>100K</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D0B3222</tstamp>
+    </comp>
+    <comp ref="C1">
+      <value>0.22uF</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D0E12F1</tstamp>
+    </comp>
+    <comp ref="R1">
+      <value>10K</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D0E61FF</tstamp>
+    </comp>
+    <comp ref="R7">
+      <value>30K</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D12D571</tstamp>
+    </comp>
+    <comp ref="C6">
+      <value>1nF</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D139E5A</tstamp>
+    </comp>
+    <comp ref="R14">
+      <value>510</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D14009E</tstamp>
+    </comp>
+    <comp ref="C4">
+      <value>470pF</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D14637D</tstamp>
+    </comp>
+    <comp ref="C8">
+      <value>33nF</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D14B8CA</tstamp>
+    </comp>
+    <comp ref="R16">
+      <value>30K</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D1A1507</tstamp>
+    </comp>
+    <comp ref="R10">
+      <value>16K</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D135E40</tstamp>
+    </comp>
+    <comp ref="R15">
+      <value>16K</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D1BBA9E</tstamp>
+    </comp>
+    <comp ref="C7">
+      <value>1nF</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D1C7402</tstamp>
+    </comp>
+    <comp ref="C9">
+      <value>470pF</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D1DF2A9</tstamp>
+    </comp>
+    <comp ref="R12">
+      <value>510</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D1FC8CB</tstamp>
+    </comp>
+    <comp ref="R9">
+      <value>100K</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D212E4B</tstamp>
+    </comp>
+    <comp ref="C5">
+      <value>33nF</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D206C6E</tstamp>
+    </comp>
+    <comp ref="R8">
+      <value>6K8</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D22D788</tstamp>
+    </comp>
+    <comp ref="R3">
+      <value>R470</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D24113A</tstamp>
+    </comp>
+    <comp ref="R2">
+      <value>R470</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D255330</tstamp>
+    </comp>
+    <comp ref="C3">
+      <value>10nF</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D25A94A</tstamp>
+    </comp>
+    <comp ref="C2">
+      <value>2.2uF</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D269141</tstamp>
+    </comp>
+    <comp ref="C11">
+      <value>0.1uF</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D2C02E5</tstamp>
+    </comp>
+    <comp ref="C10">
+      <value>0.1uF</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5D2F3FF8</tstamp>
+    </comp>
+  </components>
+  <libparts>
+    <libpart lib="Amplifier_Operational" part="LM2902">
+      <aliases>
+        <alias>LM324</alias>
+        <alias>TLC274</alias>
+        <alias>TLC279</alias>
+        <alias>TL074</alias>
+        <alias>LM324A</alias>
+        <alias>MCP6004</alias>
+        <alias>TL084</alias>
+        <alias>TL064</alias>
+        <alias>LMV324</alias>
+        <alias>LMC6484</alias>
+        <alias>MCP604</alias>
+        <alias>MC33079</alias>
+        <alias>MC33174</alias>
+        <alias>MC33179</alias>
+        <alias>OPA1604</alias>
+        <alias>OPA1679</alias>
+        <alias>OPA4134</alias>
+        <alias>OPA4340UA</alias>
+        <alias>OPA4376</alias>
+        <alias>MCP6L94</alias>
+        <alias>TSV914</alias>
+        <alias>ADA4807-4</alias>
+        <alias>TSV994</alias>
+      </aliases>
+      <description>Low-Power, Quad-Operational Amplifiers, DIP-14/SOIC-14/SSOP-14</description>
+      <docs>http://www.ti.com/lit/ds/symlink/lm2902-n.pdf</docs>
+      <footprints>
+        <fp>SOIC*3.9x8.7mm*P1.27mm*</fp>
+        <fp>DIP*W7.62mm*</fp>
+        <fp>TSSOP*4.4x5mm*P0.65mm*</fp>
+        <fp>SSOP*5.3x6.2mm*P0.65mm*</fp>
+        <fp>MSOP*3x3mm*P0.5mm*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">LM2902</field>
+      </fields>
+      <pins>
+        <pin num="1" name="~" type="output"/>
+        <pin num="2" name="-" type="input"/>
+        <pin num="3" name="+" type="input"/>
+        <pin num="4" name="V+" type="power_in"/>
+        <pin num="5" name="+" type="input"/>
+        <pin num="6" name="-" type="input"/>
+        <pin num="7" name="~" type="output"/>
+        <pin num="8" name="~" type="output"/>
+        <pin num="9" name="-" type="input"/>
+        <pin num="10" name="+" type="input"/>
+        <pin num="11" name="V-" type="power_in"/>
+        <pin num="12" name="+" type="input"/>
+        <pin num="13" name="-" type="input"/>
+        <pin num="14" name="~" type="output"/>
+      </pins>
+    </libpart>
+    <libpart lib="Connector" part="AudioJack4">
+      <description>Audio Jack, 4 Poles (TRRS)</description>
+      <docs>~</docs>
+      <footprints>
+        <fp>Jack*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">J</field>
+        <field name="Value">AudioJack4</field>
+      </fields>
+      <pins>
+        <pin num="R1" name="~" type="passive"/>
+        <pin num="R2" name="~" type="passive"/>
+        <pin num="S" name="~" type="passive"/>
+        <pin num="T" name="~" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Device" part="C">
+      <description>Unpolarized capacitor</description>
+      <docs>~</docs>
+      <footprints>
+        <fp>C_*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">C</field>
+        <field name="Value">C</field>
+      </fields>
+      <pins>
+        <pin num="1" name="~" type="passive"/>
+        <pin num="2" name="~" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Device" part="LED">
+      <description>Light emitting diode</description>
+      <docs>~</docs>
+      <footprints>
+        <fp>LED*</fp>
+        <fp>LED_SMD:*</fp>
+        <fp>LED_THT:*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">D</field>
+        <field name="Value">LED</field>
+      </fields>
+      <pins>
+        <pin num="1" name="K" type="passive"/>
+        <pin num="2" name="A" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Device" part="R">
+      <description>Resistor</description>
+      <docs>~</docs>
+      <footprints>
+        <fp>R_*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">R</field>
+        <field name="Value">R</field>
+      </fields>
+      <pins>
+        <pin num="1" name="~" type="passive"/>
+        <pin num="2" name="~" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Diode" part="1N6263">
+      <aliases>
+        <alias>BAT41</alias>
+        <alias>BAT42</alias>
+        <alias>BAT43</alias>
+        <alias>BAT46</alias>
+        <alias>BAT48RL</alias>
+        <alias>BAT85</alias>
+        <alias>BAT86S</alias>
+        <alias>BAT86</alias>
+        <alias>1N5711</alias>
+        <alias>1N5712</alias>
+        <alias>1N6857</alias>
+        <alias>1N6858</alias>
+        <alias>DSB5712</alias>
+        <alias>DSB2810</alias>
+      </aliases>
+      <description>60V 15mA Schottky diode, DO-35</description>
+      <docs>www.st.com/resource/en/datasheet/1n6263.pdf</docs>
+      <footprints>
+        <fp>D*DO?35*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">D</field>
+        <field name="Value">1N6263</field>
+        <field name="Footprint">Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal</field>
+      </fields>
+      <pins>
+        <pin num="1" name="K" type="passive"/>
+        <pin num="2" name="A" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Memory_EEPROM" part="24LC16">
+      <aliases>
+        <alias>24LC02</alias>
+        <alias>24LC00</alias>
+        <alias>24LC04</alias>
+        <alias>24LC08</alias>
+        <alias>24LC01</alias>
+        <alias>24LC512</alias>
+        <alias>24LC64</alias>
+        <alias>24LC1025</alias>
+        <alias>24LC32</alias>
+        <alias>24LC256</alias>
+        <alias>24LC128</alias>
+        <alias>CAT24C256</alias>
+        <alias>CAT24C128</alias>
+      </aliases>
+      <description>I2C Serial EEPROM, 16Kb, DIP-8/SOIC-8/TSSOP-8/DFN-8</description>
+      <docs>http://ww1.microchip.com/downloads/en/DeviceDoc/21703d.pdf</docs>
+      <footprints>
+        <fp>DIP*W7.62mm*</fp>
+        <fp>SOIC*3.9x4.9mm*</fp>
+        <fp>TSSOP*4.4x3mm*P0.65mm*</fp>
+        <fp>DFN*3x2mm*P0.5mm*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">24LC16</field>
+      </fields>
+      <pins>
+        <pin num="1" name="A0" type="input"/>
+        <pin num="2" name="A1" type="input"/>
+        <pin num="3" name="A2" type="input"/>
+        <pin num="4" name="GND" type="power_in"/>
+        <pin num="5" name="SDA" type="BiDi"/>
+        <pin num="6" name="SCL" type="input"/>
+        <pin num="7" name="WP" type="input"/>
+        <pin num="8" name="VCC" type="power_in"/>
+      </pins>
+    </libpart>
+    <libpart lib="NUCLEO-F303K8" part="NUCLEO-F303K8">
+      <docs>NUCLEO-F303K8</docs>
+      <fields>
+        <field name="Reference">A</field>
+        <field name="Value">NUCLEO-F303K8</field>
+        <field name="Footprint">MODULE_NUCLEO-F303K8</field>
+        <field name="Datasheet">NUCLEO-F303K8</field>
+        <field name="Field4">Unavailable</field>
+        <field name="Field5">None</field>
+        <field name="Field6">STM32 Nucleo-32 development board with STM32F303K8T6 MCU, supports Arduino connectivity</field>
+        <field name="Field7">STMicroelectronics</field>
+        <field name="Field8">None</field>
+      </fields>
+      <pins>
+        <pin num="3.10" name="PF0" type="BiDi"/>
+        <pin num="3.1" name="PA9" type="BiDi"/>
+        <pin num="3.9" name="PB1" type="BiDi"/>
+        <pin num="3.8" name="PB6" type="BiDi"/>
+        <pin num="3.7" name="PB7" type="BiDi"/>
+        <pin num="3.6" name="PB0" type="BiDi"/>
+        <pin num="3.5" name="PA12" type="BiDi"/>
+        <pin num="3.4" name="GND" type="BiDi"/>
+        <pin num="3.3" name="NRST" type="BiDi"/>
+        <pin num="3.2" name="PA10" type="BiDi"/>
+        <pin num="3.15" name="PB4" type="BiDi"/>
+        <pin num="3.14" name="PB5" type="BiDi"/>
+        <pin num="3.13" name="PA11" type="BiDi"/>
+        <pin num="3.12" name="PA8" type="BiDi"/>
+        <pin num="3.11" name="PF1" type="BiDi"/>
+        <pin num="4.9" name="PA4" type="BiDi"/>
+        <pin num="4.8" name="PA5" type="BiDi"/>
+        <pin num="4.7" name="PA6" type="BiDi"/>
+        <pin num="4.6" name="PA7" type="BiDi"/>
+        <pin num="4.5" name="PA2" type="BiDi"/>
+        <pin num="4.4" name="+5V" type="power_out"/>
+        <pin num="4.3" name="NRST" type="BiDi"/>
+        <pin num="4.2" name="GND" type="power_out"/>
+        <pin num="4.15" name="PB3" type="BiDi"/>
+        <pin num="4.14" name="+3V3" type="power_out"/>
+        <pin num="4.13" name="AREF" type="BiDi"/>
+        <pin num="4.12" name="PA0" type="BiDi"/>
+        <pin num="4.11" name="PA1" type="BiDi"/>
+        <pin num="4.10" name="PA3" type="BiDi"/>
+        <pin num="4.1" name="VIN" type="power_in"/>
+      </pins>
+    </libpart>
+    <libpart lib="Transistor_FET" part="2N7000">
+      <aliases>
+        <alias>TP0610L</alias>
+        <alias>VP0610L</alias>
+      </aliases>
+      <description>0.2A Id, 200V Vds, N-Channel MOSFET, 2.6V Logic Level, TO-92</description>
+      <docs>https://www.fairchildsemi.com/datasheets/2N/2N7000.pdf</docs>
+      <footprints>
+        <fp>TO?92*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">Q</field>
+        <field name="Value">2N7000</field>
+        <field name="Footprint">Package_TO_SOT_THT:TO-92_Inline</field>
+      </fields>
+      <pins>
+        <pin num="1" name="S" type="passive"/>
+        <pin num="2" name="G" type="input"/>
+        <pin num="3" name="D" type="passive"/>
+      </pins>
+    </libpart>
+  </libparts>
+  <libraries>
+    <library logical="Amplifier_Operational">
+      <uri>/usr/share/kicad/library/Amplifier_Operational.lib</uri>
+    </library>
+    <library logical="Connector">
+      <uri>/usr/share/kicad/library/Connector.lib</uri>
+    </library>
+    <library logical="Device">
+      <uri>/usr/share/kicad/library/Device.lib</uri>
+    </library>
+    <library logical="Diode">
+      <uri>/usr/share/kicad/library/Diode.lib</uri>
+    </library>
+    <library logical="Memory_EEPROM">
+      <uri>/usr/share/kicad/library/Memory_EEPROM.lib</uri>
+    </library>
+    <library logical="NUCLEO-F303K8">
+      <uri>/home/rob/NucleoTNC/NUCLEO-F303K8.lib</uri>
+    </library>
+    <library logical="Transistor_FET">
+      <uri>/usr/share/kicad/library/Transistor_FET.lib</uri>
+    </library>
+  </libraries>
+  <nets>
+    <net code="1" name="GND">
+      <node ref="A1" pin="3.4"/>
+      <node ref="D2" pin="2"/>
+      <node ref="R11" pin="2"/>
+      <node ref="Q2" pin="1"/>
+      <node ref="R4" pin="2"/>
+      <node ref="R5" pin="2"/>
+      <node ref="C3" pin="1"/>
+      <node ref="A1" pin="4.2"/>
+      <node ref="U2" pin="4"/>
+      <node ref="U2" pin="7"/>
+      <node ref="U2" pin="3"/>
+      <node ref="C10" pin="2"/>
+      <node ref="U2" pin="2"/>
+      <node ref="U2" pin="1"/>
+      <node ref="U1" pin="11"/>
+      <node ref="C11" pin="2"/>
+      <node ref="C5" pin="1"/>
+      <node ref="C9" pin="1"/>
+      <node ref="C4" pin="1"/>
+      <node ref="C8" pin="1"/>
+      <node ref="J1" pin="S"/>
+    </net>
+    <net code="2" name="Net-(C3-Pad2)">
+      <node ref="C3" pin="2"/>
+      <node ref="R3" pin="2"/>
+    </net>
+    <net code="3" name="Net-(C2-Pad2)">
+      <node ref="C2" pin="2"/>
+      <node ref="R2" pin="2"/>
+    </net>
+    <net code="4" name="Net-(D4-Pad2)">
+      <node ref="D4" pin="2"/>
+      <node ref="R20" pin="2"/>
+    </net>
+    <net code="5" name="+3V3">
+      <node ref="R20" pin="1"/>
+      <node ref="R17" pin="1"/>
+      <node ref="R18" pin="1"/>
+      <node ref="U2" pin="8"/>
+      <node ref="C10" pin="1"/>
+      <node ref="U1" pin="4"/>
+      <node ref="C11" pin="1"/>
+      <node ref="R19" pin="1"/>
+      <node ref="A1" pin="4.14"/>
+      <node ref="D1" pin="1"/>
+    </net>
+    <net code="6" name="Net-(A1-Pad4.1)">
+      <node ref="A1" pin="4.1"/>
+    </net>
+    <net code="7" name="Net-(A1-Pad4.3)">
+      <node ref="A1" pin="4.3"/>
+    </net>
+    <net code="8" name="Net-(A1-Pad4.4)">
+      <node ref="A1" pin="4.4"/>
+    </net>
+    <net code="9" name="Net-(A1-Pad4.5)">
+      <node ref="A1" pin="4.5"/>
+    </net>
+    <net code="10" name="Net-(A1-Pad4.7)">
+      <node ref="A1" pin="4.7"/>
+    </net>
+    <net code="11" name="Net-(A1-Pad4.13)">
+      <node ref="A1" pin="4.13"/>
+    </net>
+    <net code="12" name="Net-(A1-Pad3.11)">
+      <node ref="A1" pin="3.11"/>
+    </net>
+    <net code="13" name="Net-(A1-Pad3.8)">
+      <node ref="A1" pin="3.8"/>
+    </net>
+    <net code="14" name="Net-(A1-Pad3.7)">
+      <node ref="A1" pin="3.7"/>
+    </net>
+    <net code="15" name="Net-(A1-Pad3.6)">
+      <node ref="A1" pin="3.6"/>
+    </net>
+    <net code="16" name="Net-(A1-Pad3.3)">
+      <node ref="A1" pin="3.3"/>
+    </net>
+    <net code="17" name="/I2C_SDA">
+      <node ref="R17" pin="2"/>
+      <node ref="U2" pin="5"/>
+      <node ref="A1" pin="3.15"/>
+    </net>
+    <net code="18" name="Net-(A1-Pad3.2)">
+      <node ref="A1" pin="3.2"/>
+    </net>
+    <net code="19" name="/I2C_SCL">
+      <node ref="R18" pin="2"/>
+      <node ref="U2" pin="6"/>
+      <node ref="A1" pin="4.6"/>
+    </net>
+    <net code="20" name="/AUDIO_OUT">
+      <node ref="C2" pin="1"/>
+      <node ref="Q1" pin="3"/>
+      <node ref="J1" pin="R2"/>
+    </net>
+    <net code="21" name="/AUDIO_ATTEN">
+      <node ref="R8" pin="2"/>
+      <node ref="A1" pin="3.14"/>
+    </net>
+    <net code="22" name="Net-(R2-Pad1)">
+      <node ref="U1" pin="7"/>
+      <node ref="R3" pin="1"/>
+      <node ref="R2" pin="1"/>
+      <node ref="U1" pin="6"/>
+    </net>
+    <net code="23" name="Net-(R8-Pad1)">
+      <node ref="U1" pin="5"/>
+      <node ref="R8" pin="1"/>
+      <node ref="R9" pin="2"/>
+    </net>
+    <net code="24" name="Net-(C5-Pad2)">
+      <node ref="C5" pin="2"/>
+      <node ref="R9" pin="1"/>
+      <node ref="R12" pin="2"/>
+    </net>
+    <net code="25" name="Net-(C7-Pad2)">
+      <node ref="U1" pin="1"/>
+      <node ref="R12" pin="1"/>
+      <node ref="C7" pin="2"/>
+      <node ref="U1" pin="2"/>
+    </net>
+    <net code="26" name="Net-(C9-Pad2)">
+      <node ref="U1" pin="3"/>
+      <node ref="C9" pin="2"/>
+      <node ref="R15" pin="2"/>
+    </net>
+    <net code="27" name="Net-(C7-Pad1)">
+      <node ref="R15" pin="1"/>
+      <node ref="R16" pin="1"/>
+      <node ref="C7" pin="1"/>
+    </net>
+    <net code="28" name="/DAC_AUDIO">
+      <node ref="R16" pin="2"/>
+      <node ref="A1" pin="4.9"/>
+    </net>
+    <net code="29" name="Net-(A1-Pad3.9)">
+      <node ref="A1" pin="3.9"/>
+    </net>
+    <net code="30" name="Net-(C6-Pad2)">
+      <node ref="R10" pin="2"/>
+      <node ref="R7" pin="1"/>
+      <node ref="C6" pin="2"/>
+    </net>
+    <net code="31" name="Net-(C4-Pad2)">
+      <node ref="R10" pin="1"/>
+      <node ref="U1" pin="12"/>
+      <node ref="C4" pin="2"/>
+    </net>
+    <net code="32" name="/ADC_AUDIO">
+      <node ref="C8" pin="2"/>
+      <node ref="R14" pin="1"/>
+      <node ref="A1" pin="4.12"/>
+    </net>
+    <net code="33" name="Net-(C6-Pad1)">
+      <node ref="R14" pin="2"/>
+      <node ref="U1" pin="14"/>
+      <node ref="C6" pin="1"/>
+      <node ref="U1" pin="13"/>
+    </net>
+    <net code="34" name="Net-(R7-Pad2)">
+      <node ref="U1" pin="8"/>
+      <node ref="R7" pin="2"/>
+      <node ref="U1" pin="9"/>
+    </net>
+    <net code="35" name="Net-(A1-Pad4.15)">
+      <node ref="A1" pin="4.15"/>
+    </net>
+    <net code="36" name="/DC_OFFSET">
+      <node ref="R1" pin="2"/>
+      <node ref="A1" pin="4.8"/>
+    </net>
+    <net code="37" name="/AUDIO_IN">
+      <node ref="C1" pin="2"/>
+      <node ref="J1" pin="T"/>
+    </net>
+    <net code="38" name="Net-(C1-Pad1)">
+      <node ref="D2" pin="1"/>
+      <node ref="D1" pin="2"/>
+      <node ref="U1" pin="10"/>
+      <node ref="C1" pin="1"/>
+      <node ref="R1" pin="1"/>
+    </net>
+    <net code="39" name="Net-(D3-Pad2)">
+      <node ref="R19" pin="2"/>
+      <node ref="D3" pin="2"/>
+    </net>
+    <net code="40" name="/PTT_SIMPLEX">
+      <node ref="R13" pin="1"/>
+      <node ref="A1" pin="3.5"/>
+    </net>
+    <net code="41" name="/PTT_MULTIPLEX">
+      <node ref="R6" pin="1"/>
+      <node ref="A1" pin="3.13"/>
+    </net>
+    <net code="42" name="Net-(Q2-Pad2)">
+      <node ref="R13" pin="2"/>
+      <node ref="R11" pin="1"/>
+      <node ref="Q2" pin="2"/>
+    </net>
+    <net code="43" name="Net-(Q1-Pad2)">
+      <node ref="R6" pin="2"/>
+      <node ref="R5" pin="1"/>
+      <node ref="Q1" pin="2"/>
+    </net>
+    <net code="44" name="/PTT">
+      <node ref="J1" pin="R1"/>
+      <node ref="Q2" pin="3"/>
+    </net>
+    <net code="45" name="Net-(Q1-Pad1)">
+      <node ref="Q1" pin="1"/>
+      <node ref="R4" pin="1"/>
+    </net>
+    <net code="46" name="/LED_DCD">
+      <node ref="D3" pin="1"/>
+      <node ref="A1" pin="3.1"/>
+    </net>
+    <net code="47" name="/LED_TX">
+      <node ref="D4" pin="1"/>
+      <node ref="A1" pin="3.12"/>
+    </net>
+    <net code="48" name="Net-(A1-Pad4.11)">
+      <node ref="A1" pin="4.11"/>
+    </net>
+    <net code="49" name="Net-(A1-Pad4.10)">
+      <node ref="A1" pin="4.10"/>
+    </net>
+    <net code="50" name="Net-(A1-Pad3.10)">
+      <node ref="A1" pin="3.10"/>
+    </net>
+  </nets>
+</export>

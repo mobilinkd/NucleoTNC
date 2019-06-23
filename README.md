@@ -17,3 +17,7 @@ Details of the defect are available [on the ST community site](https://community
 ----
 
 We use Eclipse CDT with the GNU MCU Eclipse plugin to build this project.
+
+## TNC Build Instructions
+
+Please go here: [TNC Build Instructions](Build/NucleoTNC.ipynb)

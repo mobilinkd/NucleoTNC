@@ -1,0 +1,4 @@
+(sym_lib_table
+  (lib (name "NUCLEO-F303K8")(type "Legacy")(uri "/home/rob/NucleoTNC/NUCLEO-F303K8.lib")(options "")(descr ""))
+  (lib (name "Nucleo32TNC")(type "Legacy")(uri "${KIPRJMOD}/Nucleo32TNC.lib")(options "")(descr ""))
+)
