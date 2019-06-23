@@ -1,11 +1,11 @@
-// Copyright 2015 Mobilinkd LLC <rob@mobilinkd.com>
+// Copyright 2015-2019 Mobilinkd LLC <rob@mobilinkd.com>
 // All rights reserved.
 
-#ifndef MOBILINKD__TNC__KISS_HARDWARE_HPP_
-#define MOBILINKD__TNC__KISS_HARDWARE_HPP_
+#pragma once
 
-#include <Log.h>
+#include "Log.h"
 #include "HdlcFrame.hpp"
+#include "AFSKTestTone.hpp"
 
 #include <cstdint>
 #include <cstring>
@@ -18,93 +18,121 @@ namespace mobilinkd { namespace tnc { namespace kiss {
 extern const char FIRMWARE_VERSION[];
 extern const char HARDWARE_VERSION[];
 
+AFSKTestTone& getAFSKTestTone();
+
 namespace hardware {
 
-const uint16_t CAP_DCD = 0x0001;
-const uint16_t CAP_SQUELCH = 0x0002;
-const uint16_t CAP_INPUT_ATTEN = 0x0004;
-const uint16_t CAP_FIRMWARE_VERSION = 0x0008;
-const uint16_t CAP_BATTERY_LEVEL = 0x0010;
-const uint16_t CAP_BT_CONN_TRACK = 0x0020;
-const uint16_t CAP_BT_NAME_CHANGE = 0x0040;
-const uint16_t CAP_BT_PIN_CHANGE = 0x0080;
-const uint16_t CAP_VERBOSE_ERROR = 0x0100;
-const uint16_t CAP_EEPROM_SAVE = 0x0200;
-const uint16_t CAP_ADJUST_INPUT = 0x0400;
+/**
+ * This indicates the API version of the device.  API versions are used to
+ * indicate to the user that the config app may need to be upgraded because
+ * the device is using a newer configuration API.
+ *
+ * The minor version should be updated whenever the API is extended (new
+ * GET/SET or CAP types added.
+ *
+ * The major version should be updated whenever non-backwards compatible
+ * changes to the API are made.
+ */
+constexpr const uint16_t KISS_API_VERSION = 0x0200;
 
-const uint8_t SAVE = 0; // Save settings to EEPROM.
-const uint8_t SET_OUTPUT_GAIN = 1;
-const uint8_t SET_INPUT_GAIN = 2;
-const uint8_t SET_SQUELCH_LEVEL = 3;
-const uint8_t POLL_INPUT_LEVEL = 4;
-const uint8_t STREAM_INPUT_LEVEL = 5;
-const uint8_t GET_BATTERY_LEVEL = 6;
-const uint8_t SEND_MARK = 7;
-const uint8_t SEND_SPACE = 8;
-const uint8_t SEND_BOTH = 9;
-const uint8_t STOP_TX = 10;
-const uint8_t RESET = 11;
-const uint8_t GET_OUTPUT_GAIN = 12;
-const uint8_t GET_INPUT_ATTEN = 13;
-const uint8_t GET_SQUELCH_LEVEL = 14;
-const uint8_t STREAM_DCD_VALUE = 15;
+constexpr const uint16_t CAP_DCD = 0x0100;
+constexpr const uint16_t CAP_SQUELCH = 0x0200;
+constexpr const uint16_t CAP_INPUT_ATTEN = 0x0400;
+constexpr const uint16_t CAP_FIRMWARE_VERSION = 0x0800;
+constexpr const uint16_t CAP_BATTERY_LEVEL = 0x1000;
+constexpr const uint16_t CAP_BT_CONN_TRACK = 0x2000;
+constexpr const uint16_t CAP_BT_NAME_CHANGE = 0x4000;
+constexpr const uint16_t CAP_BT_PIN_CHANGE = 0x8000;
+constexpr const uint16_t CAP_VERBOSE_ERROR = 0x0001;
+constexpr const uint16_t CAP_EEPROM_SAVE = 0x0002;
+constexpr const uint16_t CAP_ADJUST_INPUT = 0x0004; // Auto-adjust input levels.
+constexpr const uint16_t CAP_DFU_FIRMWARE = 0x0008; // DFU firmware style.
 
-const uint8_t SET_VERBOSITY = 16;
-const uint8_t GET_VERBOSITY = 17;
+constexpr const uint8_t SAVE = 0; // Save settings to EEPROM.
+constexpr const uint8_t SET_OUTPUT_GAIN = 1;
+constexpr const uint8_t SET_INPUT_GAIN = 2;
+constexpr const uint8_t SET_SQUELCH_LEVEL = 3;      // deprecated.
+constexpr const uint8_t POLL_INPUT_LEVEL = 4;
+constexpr const uint8_t STREAM_INPUT_LEVEL = 5;
+constexpr const uint8_t GET_BATTERY_LEVEL = 6;
+constexpr const uint8_t SEND_MARK = 7;
+constexpr const uint8_t SEND_SPACE = 8;
+constexpr const uint8_t SEND_BOTH = 9;
+constexpr const uint8_t STOP_TX = 10;
+constexpr const uint8_t RESET = 11;
+constexpr const uint8_t GET_OUTPUT_GAIN = 12;
+constexpr const uint8_t GET_INPUT_GAIN = 13;
+constexpr const uint8_t GET_SQUELCH_LEVEL = 14;
+constexpr const uint8_t STREAM_DCD_VALUE = 15;
 
-const uint8_t SET_INPUT_OFFSET = 18;
-const uint8_t GET_INPUT_OFFSET = 19;
-const uint8_t SET_OUTPUT_OFFSET = 20;
-const uint8_t GET_OUTPUT_OFFSET = 21;
-const uint8_t SET_LOWPASS_FREQ = 22;
-const uint8_t GET_LOWPASS_FREQ = 23;
-const uint8_t SET_INPUT_TWIST = 24;
-const uint8_t GET_INPUT_TWIST = 25;
-const uint8_t SET_OUTPUT_TWIST = 26;
-const uint8_t GET_OUTPUT_TWIST = 27;
+constexpr const uint8_t SET_VERBOSITY = 16;
+constexpr const uint8_t GET_VERBOSITY = 17;
 
-const uint8_t STREAM_RAW_INPUT = 28;
-const uint8_t STREAM_AMPLIFIED_INPUT = 29;
-const uint8_t STREAM_FILTERED_INPUT = 30;
-const uint8_t STREAM_OUTPUT = 31;
+constexpr const uint8_t SET_INPUT_OFFSET = 18;
+constexpr const uint8_t GET_INPUT_OFFSET = 19;
+constexpr const uint8_t SET_OUTPUT_OFFSET = 20;
+constexpr const uint8_t GET_OUTPUT_OFFSET = 21;
+constexpr const uint8_t SET_LOWPASS_FREQ = 22;
+constexpr const uint8_t GET_LOWPASS_FREQ = 23;
+constexpr const uint8_t SET_INPUT_TWIST = 24;
+constexpr const uint8_t GET_INPUT_TWIST = 25;
+constexpr const uint8_t SET_OUTPUT_TWIST = 26;
+constexpr const uint8_t GET_OUTPUT_TWIST = 27;
 
-const uint8_t OK = 32;                  // Acknowledge SET commands.
+constexpr const uint8_t STREAM_RAW_INPUT = 28;
+constexpr const uint8_t STREAM_AMPLIFIED_INPUT = 29;
+constexpr const uint8_t STREAM_FILTERED_INPUT = 30;
+constexpr const uint8_t STREAM_OUTPUT = 31;
 
-const uint8_t GET_TXDELAY = 33;
-const uint8_t GET_PERSIST = 34;
-const uint8_t GET_TIMESLOT = 35;
-const uint8_t GET_TXTAIL = 36;
-const uint8_t GET_DUPLEX = 37;
+constexpr const uint8_t OK = 32;                  // Acknowledge SET commands.
 
-const uint8_t GET_FIRMWARE_VERSION = 40;
-const uint8_t GET_HARDWARE_VERSION = 41;
-const uint8_t SAVE_EEPROM_SETTINGS = 42;
-const uint8_t ADJUST_INPUT_LEVELS = 43;
-const uint8_t POLL_INPUT_TWIST = 44;
-const uint8_t STREAM_AVG_INPUT_TWIST = 45;
-const uint8_t STREAM_INPUT_TWIST = 46;
+constexpr const uint8_t GET_TXDELAY = 33;
+constexpr const uint8_t GET_PERSIST = 34;
+constexpr const uint8_t GET_TIMESLOT = 35;
+constexpr const uint8_t GET_TXTAIL = 36;
+constexpr const uint8_t GET_DUPLEX = 37;
 
-const uint8_t SET_BLUETOOTH_NAME = 65;
-const uint8_t GET_BLUETOOTH_NAME = 66;
-const uint8_t SET_BLUETOOTH_PIN = 67; // Danger Will Robinson.
-const uint8_t GET_BLUETOOTH_PIN = 68;
-const uint8_t SET_BT_CONN_TRACK = 69; // Bluetooth connection tracking
-const uint8_t GET_BT_CONN_TRACK = 70; // Bluetooth connection tracking
-const uint8_t SET_BT_MAJOR_CLASS = 71; // Bluetooth Major Class
-const uint8_t GET_BT_MAJOR_CLASS = 72; // Bluetooth Major Class
+constexpr const uint8_t GET_FIRMWARE_VERSION = 40;
+constexpr const uint8_t GET_HARDWARE_VERSION = 41;
+constexpr const uint8_t SAVE_EEPROM_SETTINGS = 42;
+constexpr const uint8_t ADJUST_INPUT_LEVELS = 43;       // Auto-adjust levels.
+constexpr const uint8_t POLL_INPUT_TWIST = 44;
+constexpr const uint8_t STREAM_AVG_INPUT_TWIST = 45;
+constexpr const uint8_t STREAM_INPUT_TWIST = 46;
+constexpr const uint8_t GET_SERIAL_NUMBER = 47;
+constexpr const uint8_t GET_MAC_ADDRESS = 48;
+constexpr const uint8_t GET_DATETIME = 49;
+constexpr const uint8_t SET_DATETIME = 50;
+constexpr const uint8_t GET_ERROR_MSG = 51;
 
-const uint8_t SET_USB_POWER_ON = 73; // Power on when USB power available
-const uint8_t GET_USB_POWER_ON = 74;
-const uint8_t SET_USB_POWER_OFF = 75; // Power off when USB power unavailable
-const uint8_t GET_USB_POWER_OFF = 76;
-const uint8_t SET_BT_POWER_OFF = 77; // Power off after n seconds w/o BT conn
-const uint8_t GET_BT_POWER_OFF = 78;
+constexpr const uint8_t SET_BLUETOOTH_NAME = 65;
+constexpr const uint8_t GET_BLUETOOTH_NAME = 66;
+constexpr const uint8_t SET_BLUETOOTH_PIN = 67; // Danger Will Robinson.
+constexpr const uint8_t GET_BLUETOOTH_PIN = 68;
+constexpr const uint8_t SET_BT_CONN_TRACK = 69; // Bluetooth connection tracking
+constexpr const uint8_t GET_BT_CONN_TRACK = 70; // Bluetooth connection tracking
+constexpr const uint8_t SET_BT_MAJOR_CLASS = 71; // Bluetooth Major Class
+constexpr const uint8_t GET_BT_MAJOR_CLASS = 72; // Bluetooth Major Class
 
-const uint8_t SET_PTT_CHANNEL = 79; // Which PTT line to use (currently 0 or 1,
-const uint8_t GET_PTT_CHANNEL = 80; // multiplex or simplex)
+constexpr const uint8_t SET_USB_POWER_ON = 73; // Power on when USB power available
+constexpr const uint8_t GET_USB_POWER_ON = 74;
+constexpr const uint8_t SET_USB_POWER_OFF = 75; // Power off when USB power unavailable
+constexpr const uint8_t GET_USB_POWER_OFF = 76;
+constexpr const uint8_t SET_BT_POWER_OFF = 77; // Power off after n seconds w/o BT conn
+constexpr const uint8_t GET_BT_POWER_OFF = 78;
 
-const uint8_t GET_CAPABILITIES = 126;   ///< Send all capabilities.
-const uint8_t GET_ALL_VALUES = 127;     ///< Send all settings & versions.
+constexpr const uint8_t SET_PTT_CHANNEL = 79; // Which PTT line to use (currently 0 or 1,
+constexpr const uint8_t GET_PTT_CHANNEL = 80; // multiplex or simplex)
+
+constexpr const uint8_t GET_MIN_OUTPUT_TWIST = 119;  ///< int8_t (may be negative).
+constexpr const uint8_t GET_MAX_OUTPUT_TWIST = 120;  ///< int8_t (may be negative).
+constexpr const uint8_t GET_MIN_INPUT_TWIST = 121;  ///< int8_t (may be negative).
+constexpr const uint8_t GET_MAX_INPUT_TWIST = 122;  ///< int8_t (may be negative).
+constexpr const uint8_t GET_API_VERSION = 123;      ///< uint16_t (major/minor)
+constexpr const uint8_t GET_MIN_INPUT_GAIN = 124;   ///< int8_t (may be negative/attenuated).
+constexpr const uint8_t GET_MAX_INPUT_GAIN = 125;   ///< int8_t (may be negative/attenuated).
+constexpr const uint8_t GET_CAPABILITIES = 126;   ///< Send all capabilities.
+constexpr const uint8_t GET_ALL_VALUES = 127;     ///< Send all settings & versions.
 
 /**
  * Extended commands are two+ bytes in length.  They start at 80:00
@@ -114,20 +142,20 @@ const uint8_t GET_ALL_VALUES = 127;     ///< Send all settings & versions.
  * If needed, the commands can be extended to 9 nibbles (D0 - DF),
  * 13 nibbles (E0-EF) and 17 nibbles (F0-FF).
  */
-const uint8_t EXTENDED_CMD = 128;
+constexpr const uint8_t EXTENDED_CMD = 128;
 
-const uint8_t EXT_OK = 0;
-const uint8_t EXT_GET_MODEM_TYPE = 1;
-const uint8_t EXT_SET_MODEM_TYPE = 2;
-const uint8_t EXT_GET_MODEM_TYPES = 3;  ///< Return a list of supported modem types
+constexpr const uint8_t EXT_OK = 0;
+constexpr const uint8_t EXT_GET_MODEM_TYPE = 1;
+constexpr const uint8_t EXT_SET_MODEM_TYPE = 2;
+constexpr const uint8_t EXT_GET_MODEM_TYPES = 3;  ///< Return a list of supported modem types
 
-const uint8_t EXT_GET_ALIASES = 8;    ///< Number of aliases supported
-const uint8_t EXT_GET_ALIAS = 9;      ///< Alias number (uint8_t), 8 characters, 5 bytes (set, use, insert_id, preempt, hops)
-const uint8_t EXT_SET_ALIAS = 10;     ///< Alias number (uint8_t), 8 characters, 5 bytes (set, use, insert_id, preempt, hops)
+constexpr const uint8_t EXT_GET_ALIASES = 8;    ///< Number of aliases supported
+constexpr const uint8_t EXT_GET_ALIAS = 9;      ///< Alias number (uint8_t), 8 characters, 5 bytes (set, use, insert_id, preempt, hops)
+constexpr const uint8_t EXT_SET_ALIAS = 10;     ///< Alias number (uint8_t), 8 characters, 5 bytes (set, use, insert_id, preempt, hops)
 
-const uint8_t EXT_GET_BEACONS = 12;   ///< Number of beacons supported
-const uint8_t EXT_GET_BEACON = 13;    ///< Beacon number (uint8_t), uint16_t interval in seconds, 3 NUL terminated strings (callsign, path, text)
-const uint8_t EXT_SET_BEACON = 14;    ///< Beacon number (uint8_t), uint16_t interval in seconds, 3 NUL terminated strings (callsign, path, text)
+constexpr const uint8_t EXT_GET_BEACONS = 12;   ///< Number of beacons supported
+constexpr const uint8_t EXT_GET_BEACON = 13;    ///< Beacon number (uint8_t), uint16_t interval in seconds, 3 NUL terminated strings (callsign, path, text)
+constexpr const uint8_t EXT_SET_BEACON = 14;    ///< Beacon number (uint8_t), uint16_t interval in seconds, 3 NUL terminated strings (callsign, path, text)
 
 constexpr const uint8_t EXT_GET_MYCALL = 16;    ///< MYCALL callsign = 8 characters. right padded with NUL.
 constexpr const uint8_t EXT_SET_MYCALL = 17;    ///< MYCALL callsign = 8 characters. right padded with NUL.
@@ -143,7 +171,7 @@ constexpr const uint8_t MODEM_TYPE_MFSK16 = 6;
 #define KISS_OPTION_CONN_TRACK      0x01
 #define KISS_OPTION_VERBOSE         0x02
 #define KISS_OPTION_VIN_POWER_ON    0x04  // Power on when plugged in to USB
-#define KISS_OPTION_VIN_POWER_OFF   0x08  // Power off when plugged in to USB
+#define KISS_OPTION_VIN_POWER_OFF   0x08  // Power off when unplugged from USB
 #define KISS_OPTION_PTT_SIMPLEX     0x10  // Simplex PTT (the default)
 
 const char TOCALL[] = "APML00"; // Update for every feature change.
@@ -223,7 +251,11 @@ struct Hardware
     }
 
     bool crc_ok() const {
-        return crc() == checksum;
+        auto result = (crc() == checksum);
+        if (!result) {
+            WARN("CRC mismatch %04x != %04x", checksum, crc());
+        }
+        return result;
     }
 
     /**
@@ -233,14 +265,6 @@ struct Hardware
      */
     void init()
     {
-      if (crc_ok()) {
-        DEBUG("CRC OK");
-        return;
-      }
-
-      DEBUG("CRC FAILED");
-      DEBUG("checksum 0x%04x != CRC 0x%04x", checksum, crc());
-
       txdelay = 30;
       ppersist = 64;
       slot = 10;
@@ -248,7 +272,7 @@ struct Hardware
       duplex = 0;
       modem_type = ModemType::AFSK1200;
       output_gain = 63;
-      input_gain = 0;
+      input_gain = 0;   // 0-4 on TNC3
       tx_twist = 50;
       rx_twist = 0;
       log_level = Log::Level::debug;
@@ -256,7 +280,7 @@ struct Hardware
       options = KISS_OPTION_PTT_SIMPLEX;
 
       /// Callsign.   Pad unused with NUL.
-      strcpy((char*)mycall, "MYCALL");
+      strcpy((char*)mycall, "NOCALL");
 
       dedupe_seconds = 30;
       memset(aliases, 0, sizeof(aliases));
@@ -265,12 +289,11 @@ struct Hardware
 
       updatePtt();
 
-      debug();
-
       DEBUG("Settings initialized");
     }
 
     void debug() {
+#ifdef KISS_LOGGING
         DEBUG("Hardware Settings (size=%d):", sizeof(Hardware));
         DEBUG("TX Delay: %d", (int)txdelay);
         DEBUG("P* Persistence: %d", (int)ppersist);
@@ -304,13 +327,11 @@ struct Hardware
             DEBUG(" frequency (secs): %d", (int)b.seconds);
         }
         DEBUG("Checksum: %04xs", checksum);
+#endif
     }
 
-#if 1
     bool load();
-
     bool store() const;
-#endif
 
     void set_txdelay(uint8_t value);
     void set_ppersist(uint8_t value);
@@ -325,16 +346,18 @@ struct Hardware
     void get_alias(uint8_t alias);
     void set_alias(const hdlc::IoFrame* frame);
 
+    void announce_input_settings();
+
 }; // 812 bytes
 
 extern Hardware& settings();
 
 struct I2C_Storage
 {
-    constexpr static const uint16_t i2c_address{0xA0};
-    constexpr static const uint16_t capacity{4096};
-    constexpr static const uint16_t page_size{32};
-    constexpr static const uint32_t write_time{5};
+    constexpr static const uint16_t i2c_address{EEPROM_ADDRESS};
+    constexpr static const uint16_t capacity{EEPROM_CAPACITY};
+    constexpr static const uint16_t page_size{EEPROM_PAGE_SIZE};
+    constexpr static const uint32_t write_time{EEPROM_WRITE_TIME};
 
     static bool load(void* ptr, size_t len);
 
@@ -356,5 +379,3 @@ void reply8(uint8_t cmd, uint8_t result) __attribute__((noinline));
 void reply16(uint8_t cmd, uint16_t result) __attribute__((noinline));
 
 }}} // mobilinkd::tnc::kiss
-
-#endif // INMOBILINKD__TNC__KISS_HARDWARE_HPP_C_KISSHARDWARE_HPP_

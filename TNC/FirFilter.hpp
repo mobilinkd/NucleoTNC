@@ -1,10 +1,9 @@
-// Copyright 2015 Rob Riggs <rob@mobilinkd.com>
+// Copyright 2015-2019 Rob Riggs <rob@mobilinkd.com>
 // All rights reserved.
 
 #ifndef MOBILINKD__TNC__FIR_FILTER_H_
 #define MOBILINKD__TNC__FIR_FILTER_H_
 
-#include "Filter.hpp"
 #include <AudioLevel.hpp>
 
 #include "arm_math.h"
@@ -74,7 +73,7 @@ struct FirFilter {
     float* operator()(int16_t* input) // __attribute__((section(".bss2")))
     {
         for (size_t i = 0; i != BLOCK_SIZE; i++) {
-            filter_input[i] = (float(input[i]) - vgnd_) * audio::i_vgnd;
+            filter_input[i] = float(input[i]);
         }
         arm_fir_f32(&instance, filter_input, filter_output, BLOCK_SIZE);
         return filter_output;
@@ -83,6 +82,54 @@ struct FirFilter {
     float* operator()(float* input) // __attribute__((section(".bss2")))
     {
         arm_fir_f32(&instance, input, filter_output, BLOCK_SIZE);
+        return filter_output;
+    }
+
+    float operator()(float input) // __attribute__((section(".bss2")))
+    {
+        arm_fir_f32(&instance, &input, filter_output, 1);
+        return *filter_output;
+    }
+};
+
+template <size_t BLOCK_SIZE, size_t FILTER_SIZE>
+struct Q15FirFilter {
+    const q15_t* filter_taps{nullptr};
+    q15_t filter_state[BLOCK_SIZE + FILTER_SIZE - 1];
+    q15_t filter_input[BLOCK_SIZE];
+    q15_t filter_output[BLOCK_SIZE];
+    q15_t vgnd_{0};
+    q15_t i_vgnd_{0};
+    arm_fir_instance_q15 instance{};
+
+    Q15FirFilter()
+    {}
+
+    Q15FirFilter(const q15_t* taps)
+    : filter_taps(taps)
+    {
+        init(taps);
+    }
+
+    void init(const q15_t* taps)
+    {
+        vgnd_ = audio::virtual_ground;
+        filter_taps = taps;
+        arm_fir_init_q15(&instance, FILTER_SIZE, const_cast<q15_t*>(filter_taps), // WTF ARM?!?
+            filter_state, BLOCK_SIZE);
+    }
+
+    // ADC input
+    q15_t* operator()(q15_t* input) // __attribute__((section(".bss2")))
+    {
+        arm_fir_fast_q15(&instance, input, filter_output, BLOCK_SIZE);
+        return filter_output;
+    }
+
+    // LPF input
+    q15_t* filter(q15_t* input) // __attribute__((section(".bss2")))
+    {
+        arm_fir_fast_q15(&instance, input, filter_output, BLOCK_SIZE);
         return filter_output;
     }
 };

@@ -58,7 +58,6 @@
 /* USER CODE END Includes */
 
 /* Private define ------------------------------------------------------------*/
-
 #define VCP_TX_Pin GPIO_PIN_2
 #define VCP_TX_GPIO_Port GPIOA
 #define AUDIO_IN_Pin GPIO_PIN_3
@@ -100,17 +99,26 @@
 
 /* USER CODE BEGIN Private defines */
 
+#define EEPROM_ADDRESS 0xA0
+#define EEPROM_CAPACITY 4096
+#define EEPROM_PAGE_SIZE 32
+#define EEPROM_WRITE_TIME 5
+
 #define CMD_USER_BUTTON_DOWN 1
 #define CMD_USER_BUTTON_UP 2
 #define CMD_SET_PTT_SIMPLEX 3
 #define CMD_SET_PTT_MULTIPLEX 4
+
+#define CxxErrorHandler() _Error_Handler(const_cast<char*>(__FILE__), __LINE__)
+
+extern char serial_number_64[17];
 
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
  extern "C" {
 #endif
-void _Error_Handler(char *, int);
+void _Error_Handler(const char *, int);
 
 #define Error_Handler() _Error_Handler(__FILE__, __LINE__)
 #ifdef __cplusplus

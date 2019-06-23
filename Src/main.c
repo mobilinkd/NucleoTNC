@@ -52,7 +52,7 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN Includes */
-
+#include <stdint.h>
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -80,10 +80,10 @@ DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_usart2_tx;
 
 osThreadId defaultTaskHandle;
-uint32_t defaultTaskBuffer[ 256 ];
+uint32_t defaultTaskBuffer[ 64 ];
 osStaticThreadDef_t defaultTaskControlBlock;
 osThreadId ioEventTaskHandle;
-uint32_t ioEventTaskBuffer[ 384 ];
+uint32_t ioEventTaskBuffer[ 576 ];
 osStaticThreadDef_t ioEventTaskControlBlock;
 osThreadId audioInputTaskHandle;
 uint32_t audioInputTaskBuffer[ 512 ];
@@ -122,6 +122,8 @@ osTimerId beaconTimer4Handle;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+char serial_number_64[17] = {0};
+char error_message[80] __attribute__((section(".bss3"))) = {0};
 
 /* USER CODE END PV */
 
@@ -153,6 +155,31 @@ extern void onBeaconTimer4(void const * argument);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+
+/*
+ * Same algorithm as here: https://github.com/libopencm3/libopencm3/blob/master/lib/stm32/desig.c
+ */
+
+void encode_serial_number()
+{
+    uint8_t *uid = (uint8_t *)UID_BASE;
+
+    uint8_t serial[6];
+    serial[0] = uid[11];
+    serial[1] = uid[10] + uid[2];
+    serial[2] = uid[9];
+    serial[3] = uid[8] + uid[0];
+    serial[4] = uid[7];
+    serial[5] = uid[6];
+
+    snprintf(
+        serial_number_64,
+        sizeof(serial_number_64),
+        "%02X%02X%02X%02X%02X%02X",
+        serial[0], serial[1], serial[2],
+        serial[3], serial[4], serial[5]
+    );
+}
 
 /* USER CODE END 0 */
 
@@ -196,7 +223,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C3_Init();
   /* USER CODE BEGIN 2 */
-
+  encode_serial_number();
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -230,11 +257,11 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadStaticDef(defaultTask, startDefaultTask, osPriorityIdle, 0, 256, defaultTaskBuffer, &defaultTaskControlBlock);
+  osThreadStaticDef(defaultTask, startDefaultTask, osPriorityIdle, 0, 64, defaultTaskBuffer, &defaultTaskControlBlock);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of ioEventTask */
-  osThreadStaticDef(ioEventTask, startIOEventTask, osPriorityLow, 0, 384, ioEventTaskBuffer, &ioEventTaskControlBlock);
+  osThreadStaticDef(ioEventTask, startIOEventTask, osPriorityLow, 0, 576, ioEventTaskBuffer, &ioEventTaskControlBlock);
   ioEventTaskHandle = osThreadCreate(osThread(ioEventTask), NULL);
 
   /* definition and creation of audioInputTask */
@@ -439,7 +466,7 @@ static void MX_ADC1_Init(void)
     */
   sConfig.Channel = ADC_CHANNEL_8;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_6CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_12CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
@@ -453,7 +480,6 @@ static void MX_ADC1_Init(void)
 /* CRC init function */
 static void MX_CRC_Init(void)
 {
-
   hcrc.Instance = CRC;
   hcrc.Init.DefaultPolynomialUse = DEFAULT_POLYNOMIAL_DISABLE;
   hcrc.Init.DefaultInitValueUse = DEFAULT_INIT_VALUE_DISABLE;
@@ -512,7 +538,7 @@ static void MX_I2C3_Init(void)
 {
 
   hi2c3.Instance = I2C3;
-  hi2c3.Init.Timing = 0x20000209;
+  hi2c3.Init.Timing = 0x2010091A;
   hi2c3.Init.OwnAddress1 = 0;
   hi2c3.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c3.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -864,7 +890,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   * @param  line: The line in file as a number.
   * @retval None
   */
-void _Error_Handler(char *file, int line)
+void _Error_Handler(const char *file, int line)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */

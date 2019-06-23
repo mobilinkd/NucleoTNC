@@ -2,7 +2,7 @@
 // All rights reserved.
 
 #ifndef MOBILINKD__TNC__AFSK_TEST_TONE_HPP_
-#define MOBILINKD__TNC__AFSKTESTTONE_HPP_
+#define MOBILINKD__TNC__AFSK_TEST_TONE_HPP_
 
 #include "cmsis_os.h"
 
@@ -29,4 +29,4 @@ struct AFSKTestTone
 }} // mobilinkd::tnc
 
 
-#endif // MOBILINKD__TNC__AFSKTESTTONE_HPP_
+#endif // MOBILINKD__TNC__AFSK_TEST_TONE_HPP_

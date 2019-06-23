@@ -1,4 +1,4 @@
-// Copyright 2015 Mobilinkd LLC <rob@mobilinkd.com>
+// Copyright 2015-2019 Mobilinkd LLC <rob@mobilinkd.com>
 // All rights reserved.
 
 
@@ -36,7 +36,7 @@ public:
     typedef typename data_type::iterator iterator;
 
     enum Type {
-        DATA, TX_DELAY, P_PERSIST, SLOT_TIME, TX_TAIL, DUPLEX, HARDWARE,
+        DATA = 0, TX_DELAY, P_PERSIST, SLOT_TIME, TX_TAIL, DUPLEX, HARDWARE,
         TEXT, LOG};
 
     enum Source {
@@ -72,7 +72,7 @@ private:
         checksum <<= 16;     // Shift
         asm volatile("rbit %0, %0" : "+r" (checksum)); // Reverse
         uint16_t result = checksum & 0xFFFF;
-//        DEBUG("CRC = %hx", result);
+        DEBUG("CRC = %hx", result);
         return result;
     }
 #else
@@ -95,7 +95,7 @@ public:
         crc_ = -1;
         fcs_ = -2;
         complete_ = false;
-        frame_type_ = 0;
+        frame_type_ = 0;    // RF_DATA.
     }
 
     void assign(data_type& data) {
@@ -133,13 +133,13 @@ public:
         fcs_ = (*it);
         ++it;
         fcs_ |= (*it) << 8;
-//        DEBUG("FCS = %hx", fcs_);
+        DEBUG("FCS = %hx", fcs_);
         crc_ = compute_crc(data_.begin());
         complete_ = true;
     }
 };
 
-template <typename Frame>
+template <typename Frame, size_t SIZE = 16>
 class FramePool
 {
 public:
@@ -147,7 +147,7 @@ public:
     typedef list<frame_type, constant_time_size<false>> FrameList;
 
 private:
-    static const uint16_t FRAME_COUNT = 16;
+    static const uint16_t FRAME_COUNT = SIZE;
     frame_type frames_[FRAME_COUNT];
     FrameList free_list_;
 
@@ -170,10 +170,12 @@ public:
             free_list_.pop_front();
         }
         taskEXIT_CRITICAL_FROM_ISR(x);
+        DEBUG("Acquired frame %p (size after = %d)", result, free_list_.size());
         return result;
     }
 
     void release(frame_type* frame) {
+        DEBUG("Released frame %p (size before = %d)", frame, free_list_.size());
         frame->clear();
         auto x = taskENTER_CRITICAL_FROM_ISR();
         free_list_.push_back(*frame);
@@ -186,7 +188,7 @@ typedef buffer::Pool<48> FrameSegmentPool;  // 12K buffer of frames;
 extern FrameSegmentPool frameSegmentPool;
 
 typedef Frame<FrameSegmentPool, &frameSegmentPool> IoFrame;
-typedef FramePool<IoFrame> IoFramePool;
+typedef FramePool<IoFrame, 48> IoFramePool;
 
 IoFramePool& ioFramePool(void);
 
@@ -195,12 +197,15 @@ IoFramePool& ioFramePool(void);
  * that causes functions using ioFramePool().release(frame) to use an
  * extremely large amount of stack space (4-6K vs. 24 bytes).
  *
- * This function merely acts as some sort of firewall to the stack usage.
+ * This function merely acts as a compiler firewall to the stack usage.
  * It's own stack usage is minimal even though it is making the same call.
  *
  * @param frame
  */
 void release(IoFrame* frame);
+
+IoFrame* acquire(void);
+IoFrame* acquire_wait(void);
 
 }}} // mobilinkd::tnc::hdlc
 

@@ -8,6 +8,7 @@
 
 #include <arm_math.h>
 #include <complex>
+#include <cmath>
 
 namespace mobilinkd { namespace tnc {
 

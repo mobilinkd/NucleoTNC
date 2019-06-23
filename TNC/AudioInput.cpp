@@ -1,4 +1,4 @@
-// Copyright 2015 Rob Riggs <rob@mobilinkd.com>
+// Copyright 2018-2019 Rob Riggs <rob@mobilinkd.com>
 // All rights reserved.
 
 #include "AudioInput.hpp"
@@ -99,11 +99,11 @@ extern "C" void startAudioInputTask(void const*) {
             break;
         case STREAM_AVERAGE_TWIST_LEVEL:
             DEBUG("STREAM_AVERAGE_TWIST_LEVEL");
-            streamAverageInputTwist();
+            // streamAverageInputTwist();
             break;
         case STREAM_INSTANT_TWIST_LEVEL:
             DEBUG("STREAM_INSTANT_TWIST_LEVEL");
-            streamInstantInputTwist();
+            // streamInstantInputTwist();
             break;
         case AUTO_ADJUST_INPUT_LEVEL:
             DEBUG("AUTO_ADJUST_INPUT_LEVEL");
@@ -129,260 +129,42 @@ extern "C" void startAudioInputTask(void const*) {
 namespace mobilinkd { namespace tnc { namespace audio {
 
 /*
-
-FIR filter designed with
-http://t-filter.appspot.com
-
-sampling frequency: 26400 Hz
-
-* 0 Hz - 800 Hz
-  gain = 0
-  desired attenuation = -40 dB
-  actual attenuation = -41.713187739640446 dB
-
-* 1100 Hz - 2300 Hz
-  gain = 1
-  desired ripple = 3 dB
-  actual ripple = 1.9403554103597218 dB
-
-* 2600 Hz - 13200 Hz
-  gain = 0
-  desired attenuation = -40 dB
-  actual attenuation = -41.713187739640446 dB
-
-*/
-
-#define FILTER_TAP_NUM 121
-
-const float taps_0dB_121[] = {
-  0.00404434702588704,
-  -0.0003678805989470367,
-  -0.0011037474176397869,
-  -0.0023718433790735397,
-  -0.004074774206090812,
-  -0.005873042355767296,
-  -0.007185024927682025,
-  -0.00733586918005499,
-  -0.005849936137673611,
-  -0.0026340821242355635,
-  0.001829866887380395,
-  0.006596559367932984,
-  0.010513363703436297,
-  0.012581963716759209,
-  0.012278717176141912,
-  0.009711068794837135,
-  0.005595156551222992,
-  0.0010151465722928203,
-  -0.0028911100291917724,
-  -0.00525632756952279,
-  -0.005713225280738633,
-  -0.004481173891886628,
-  -0.0022979447479362165,
-  -0.00020042687909196258,
-  0.0007698191454281245,
-  -0.00010521900913954391,
-  -0.0029591195718788473,
-  -0.00722329412770922,
-  -0.01171525034180743,
-  -0.014940096229612041,
-  -0.015533747313789608,
-  -0.012735965353880947,
-  -0.006719733175529481,
-  0.0013488096154956725,
-  0.00958058819325866,
-  0.015905894530456915,
-  0.018729580500272548,
-  0.01748781569748245,
-  0.012897342590446394,
-  0.006795493031300682,
-  0.0015881037163025886,
-  -0.0005374299552534915,
-  0.0016047331197704602,
-  0.007673729209166328,
-  0.015724242346878387,
-  0.022631203832237833,
-  0.024935722640487233,
-  0.01989507252801227,
-  0.00645078432931977,
-  -0.014172629267618218,
-  -0.038442876378037664,
-  -0.06113274585379875,
-  -0.07647113797360244,
-  -0.07957164384983365,
-  -0.06778356575105521,
-  -0.04159845430900078,
-  -0.0048373906972505945,
-  0.03598583922416374,
-  0.0730150987796154,
-  0.09880455186134979,
-  0.10804223448811107,
-  0.09880455186134979,
-  0.0730150987796154,
-  0.03598583922416374,
-  -0.0048373906972505945,
-  -0.04159845430900078,
-  -0.06778356575105521,
-  -0.07957164384983365,
-  -0.07647113797360244,
-  -0.06113274585379875,
-  -0.038442876378037664,
-  -0.014172629267618218,
-  0.006450784329319771,
-  0.01989507252801227,
-  0.024935722640487233,
-  0.022631203832237833,
-  0.015724242346878387,
-  0.007673729209166332,
-  0.0016047331197704602,
-  -0.0005374299552534915,
-  0.0015881037163025886,
-  0.0067954930313006805,
-  0.012897342590446394,
-  0.017487815697482458,
-  0.01872958050027255,
-  0.015905894530456915,
-  0.00958058819325866,
-  0.0013488096154956762,
-  -0.006719733175529481,
-  -0.012735965353880947,
-  -0.015533747313789608,
-  -0.014940096229612034,
-  -0.01171525034180743,
-  -0.00722329412770922,
-  -0.0029591195718788473,
-  -0.00010521900913954758,
-  0.0007698191454281245,
-  -0.00020042687909196258,
-  -0.0022979447479362165,
-  -0.004481173891886626,
-  -0.005713225280738633,
-  -0.005256327569522788,
-  -0.0028911100291917724,
-  0.0010151465722928203,
-  0.005595156551222992,
-  0.009711068794837135,
-  0.012278717176141915,
-  0.012581963716759209,
-  0.010513363703436297,
-  0.006596559367932984,
-  0.001829866887380395,
-  -0.0026340821242355635,
-  -0.005849936137673611,
-  -0.0073358691800549875,
-  -0.007185024927682024,
-  -0.005873042355767296,
-  -0.004074774206090811,
-  -0.0023718433790735397,
-  -0.0011037474176397869,
-  -0.00036788059894704404,
-  0.00404434702588704
-};
-
-/*
-
-FIR filter designed with
-http://t-filter.appspot.com
-
-sampling frequency: 26400 Hz
-
-* 0 Hz - 600 Hz
-  gain = 0
-  desired attenuation = -40 dB
-  actual attenuation = -41.59537969202882 dB
-
-* 1100 Hz - 2300 Hz
-  gain = 1
-  desired ripple = 3 dB
-  actual ripple = 1.9670775534013671 dB
-
-* 2800 Hz - 13200 Hz
-  gain = 0
-  desired attenuation = -40 dB
-  actual attenuation = -41.59537969202882 dB
-
-*/
-
-// #define FILTER_TAP_NUM 73
-
-const float taps_0dB_73[] = {
-  0.0010893641938196257,
-  0.0029403198794405202,
-  -0.0037231874681753637,
-  -0.005078116094780293,
-  -0.008797286521082463,
-  -0.011317340935878852,
-  -0.012200463385017889,
-  -0.01036925371439487,
-  -0.005637326405238566,
-  0.0014334055832832988,
-  0.009462055516437227,
-  0.016585173167785613,
-  0.020968649539195763,
-  0.021402512805125434,
-  0.017768177789191805,
-  0.011189277365350641,
-  0.003796773667470304,
-  -0.0019035128640327481,
-  -0.003853114272608765,
-  -0.0012626334798333488,
-  0.004945485136075468,
-  0.012177421685799305,
-  0.016832103112238102,
-  0.01536679512873413,
-  0.005573647945409955,
-  -0.012436210925634471,
-  -0.03581550676890827,
-  -0.05935854007614169,
-  -0.07666569528110105,
-  -0.08180873487685453,
-  -0.07107700533422828,
-  -0.0442469908102239,
-  -0.005044918510227134,
-  0.03944927956419565,
-  0.0803589200537307,
-  0.10908069178917619,
-  0.11940367705752576,
-  0.1090806917891762,
-  0.0803589200537307,
-  0.03944927956419565,
-  -0.005044918510227135,
-  -0.0442469908102239,
-  -0.07107700533422828,
-  -0.08180873487685453,
-  -0.07666569528110105,
-  -0.05935854007614169,
-  -0.03581550676890827,
-  -0.012436210925634473,
-  0.005573647945409955,
-  0.015366795128734134,
-  0.016832103112238102,
-  0.012177421685799305,
-  0.004945485136075468,
-  -0.0012626334798333488,
-  -0.003853114272608765,
-  -0.001903512864032745,
-  0.003796773667470304,
-  0.011189277365350641,
-  0.017768177789191805,
-  0.021402512805125434,
-  0.020968649539195763,
-  0.016585173167785607,
-  0.009462055516437227,
-  0.0014334055832832988,
-  -0.005637326405238568,
-  -0.01036925371439487,
-  -0.012200463385017889,
-  -0.011317340935878852,
-  -0.008797286521082463,
-  -0.005078116094780293,
-  -0.0037231874681753637,
-  0.0029403198794405202,
-  0.0010893641938196242
+ * Generated with Scipy Filter, 152 coefficients, 1100-2300Hz bandpass,
+ * Hann window, starting and ending 0 value coefficients removed.
+ *
+ * np.array(
+ *  firwin2(152,
+ *      [
+ *          0.0,
+ *          1000.0/(sample_rate/2),
+ *          1100.0/(sample_rate/2),
+ *          2350.0/(sample_rate/2),
+ *          2500.0/(sample_rate/2),
+ *          1.0
+ *      ],
+ *      [0,0,1,1,0,0],
+ *      antisymmetric = False,
+ *      window='hann') * 32768,
+ *  dtype=int)[10:-10]
+ */
+constexpr size_t FILTER_TAP_NUM = 132;
+const q15_t bpf_coeffs[] = {
+    4,     0,    -5,   -10,   -13,   -12,    -9,    -4,    -2,    -4,   -12,   -26,
+  -41,   -52,   -51,   -35,    -3,    39,    83,   117,   131,   118,    83,    36,
+   -6,   -32,   -30,    -3,    36,    67,    66,    19,   -74,  -199,  -323,  -408,
+ -421,  -344,  -187,    17,   218,   364,   417,   369,   247,   106,    14,    26,
+  166,   407,   676,   865,   866,   605,    68,  -675, -1484, -2171, -2547, -2471,
+-1895,  -882,   394,  1692,  2747,  3337,  3337,  2747,  1692,   394,  -882, -1895,
+-2471, -2547, -2171, -1484,  -675,    68,   605,   866,   865,   676,   407,   166,
+   26,    14,   106,   247,   369,   417,   364,   218,    17,  -187,  -344,  -421,
+ -408,  -323,  -199,   -74,    19,    66,    67,    36,    -3,   -30,   -32,    -6,
+   36,    83,   118,   131,   117,    83,    39,    -3,   -35,   -51,   -52,   -41,
+  -26,   -12,    -4,    -2,    -4,    -9,   -12,   -13,   -10,    -5,     0,     4,
 };
 
 uint32_t adc_buffer[ADC_BUFFER_SIZE];       // Two samples per element.
 
-typedef FirFilter<ADC_BUFFER_SIZE, FILTER_TAP_NUM> audio_filter_type;
+typedef Q15FirFilter<ADC_BUFFER_SIZE, FILTER_TAP_NUM> audio_filter_type;
 
 audio_filter_type audio_filter;
 
@@ -412,12 +194,13 @@ mobilinkd::tnc::afsk1200::Demodulator& getDemod3(const TFirCoefficients<9>& f) {
     return instance;
 }
 
+q15_t normalized[ADC_BUFFER_SIZE];
 
 void demodulatorTask() {
 
     DEBUG("enter demodulatorTask");
 
-    audio_filter.init(taps_0dB_121);
+    audio_filter.init(bpf_coeffs);
 
     // rx_twist is 6dB for discriminator input and 0db for de-emphasized input.
     auto twist = kiss::settings().rx_twist;
@@ -437,7 +220,6 @@ void demodulatorTask() {
     bool dcd_status{false};
 
     while (true) {
-        mobilinkd::tnc::gpio::LD3::off();
         osEvent peek = osMessagePeek(audioInputQueueHandle, 0);
         if (peek.status == osEventMessage) break;
 
@@ -445,14 +227,15 @@ void demodulatorTask() {
         if (evt.status != osEventMessage) {
             continue;
         }
+
         ++counter;
-        mobilinkd::tnc::gpio::LD3::on();
 
         auto block = (adc_pool_type::chunk_type*) evt.value.p;
         auto samples = (int16_t*) block->buffer;
 
-        float* audio = audio_filter(samples);
+        arm_offset_q15(samples, 0 - virtual_ground, normalized, ADC_BUFFER_SIZE);
         adcPool.deallocate(block);
+        q15_t* audio = audio_filter(normalized);
 
 #if 1
         frame = demod1(audio, ADC_BUFFER_SIZE);
@@ -463,11 +246,11 @@ void demodulatorTask() {
                   last_fcs = save_fcs;
                   last_counter = counter;
                 } else {
-                  hdlc::ioFramePool().release(frame);
+                  hdlc::release(frame);
                 }
             }
             else {
-                hdlc::ioFramePool().release(frame);
+                hdlc::release(frame);
             }
         }
 #endif
@@ -481,11 +264,11 @@ void demodulatorTask() {
                 last_fcs = save_fcs;
                 last_counter = counter;
               } else {
-                hdlc::ioFramePool().release(frame);
+                hdlc::release(frame);
               }
           }
           else {
-              hdlc::ioFramePool().release(frame);
+              hdlc::release(frame);
           }
         }
 #endif
@@ -499,11 +282,11 @@ void demodulatorTask() {
                 last_fcs = save_fcs;
                 last_counter = counter;
               } else {
-                hdlc::ioFramePool().release(frame);
+                hdlc::release(frame);
               }
           }
           else {
-              hdlc::ioFramePool().release(frame);
+              hdlc::release(frame);
           }
         }
 #endif
@@ -538,8 +321,8 @@ void streamLevels(uint32_t channel, uint8_t cmd) {
 
         uint16_t count = 0;
         uint32_t accum = 0;
-        uint16_t min = std::numeric_limits<uint16_t>::max();
-        uint16_t max = std::numeric_limits<uint16_t>::min();
+        uint16_t vmin = std::numeric_limits<uint16_t>::max();
+        uint16_t vmax = std::numeric_limits<uint16_t>::min();
 
         while (count < 2640) {
             osEvent evt = osMessageGet(adcInputQueueHandle, osWaitForever);
@@ -548,30 +331,30 @@ void streamLevels(uint32_t channel, uint8_t cmd) {
             count += ADC_BUFFER_SIZE;
 
             auto block = (adc_pool_type::chunk_type*) evt.value.p;
-            uint16_t* start =  (uint16_t*) block->buffer;
-            uint16_t* end = start + ADC_BUFFER_SIZE;
+            auto start =  (uint16_t*) block->buffer;
+            auto end = start + ADC_BUFFER_SIZE;
 
-            min = std::min(min, *std::min_element(start, end));
-            max = std::max(max, *std::max_element(start, end));
+            vmin = std::min(vmin, *std::min_element(start, end));
+            vmax = std::max(vmax, *std::max_element(start, end));
             accum = std::accumulate(start, end, accum);
 
             adcPool.deallocate(block);
         }
 
-        uint16_t pp = (max - min) << 4;
+        uint16_t pp = (vmax - vmin) << 4;
         uint16_t avg = (accum / count) << 4;
-        min <<= 4;
-        max <<= 4;
+        vmin <<= 4;
+        vmax <<= 4;
 
         data[0] = cmd;
         data[1] = (pp >> 8) & 0xFF;   // Vpp
         data[2] = (pp & 0xFF);
         data[3] = (avg >> 8) & 0xFF;  // Vavg (DC level)
         data[4] = (avg & 0xFF);
-        data[5] = (min >> 8) & 0xFF;  // Vmin
-        data[6] = (min & 0xFF);
-        data[7] = (max >> 8) & 0xFF;  // Vmax
-        data[8] = (max & 0xFF);
+        data[5] = (vmin >> 8) & 0xFF;  // Vmin
+        data[6] = (vmin & 0xFF);
+        data[7] = (vmax >> 8) & 0xFF;  // Vmax
+        data[8] = (vmax & 0xFF);
 
         ioport->write(data, 9, 6, 10);
     }
@@ -600,10 +383,8 @@ levels_type readLevels(uint32_t channel, uint32_t samples) {
         if (evt.status != osEventMessage) continue;
 
         auto block = (adc_pool_type::chunk_type*) evt.value.p;
-        auto start =  reinterpret_cast<uint16_t*>(block->buffer);
+        auto start =  (uint16_t*) block->buffer;
         auto end = start + ADC_BUFFER_SIZE;
-
-//        if (count == 0) for (auto it = start; it != end; ++it) DEBUG("%hu\n", *it);
 
         vmin = std::min(vmin, *std::min_element(start, end));
         vmax = std::max(vmax, *std::max_element(start, end));
@@ -622,6 +403,7 @@ levels_type readLevels(uint32_t channel, uint32_t samples) {
 
     return levels_type(pp, avg, vmin, vmax);
 }
+
 
 /**
  * This provides 100Hz resolution to the Goerztel filter.
@@ -649,22 +431,22 @@ float readTwist()
 
   startADC(channel);
 
-  for (uint32_t i = 0; i != AVG_SAMPLES; ++i) {
-
+  for (uint32_t i = 0; i != AVG_SAMPLES; ++i)
+  {
     uint32_t count = 0;
-    while (count < TWIST_SAMPLE_SIZE) {
-
+    while (count < TWIST_SAMPLE_SIZE)
+    {
         osEvent evt = osMessageGet(adcInputQueueHandle, osWaitForever);
         if (evt.status != osEventMessage) continue;
 
-        count += ADC_BUFFER_SIZE;
-
-        auto block = (adc_pool_type::chunk_type*) evt.value.v;
+        auto block = (adc_pool_type::chunk_type*) evt.value.p;
         uint16_t* data =  (uint16_t*) block->buffer;
         gf1200(data, ADC_BUFFER_SIZE);
         gf2200(data, ADC_BUFFER_SIZE);
 
         adcPool.deallocate(block);
+
+        count += ADC_BUFFER_SIZE;
     }
 
     g1200 += (gf1200 / count);
@@ -733,7 +515,7 @@ void pollInputTwist()
 
           count += ADC_BUFFER_SIZE;
 
-          auto block = (adc_pool_type::chunk_type*) evt.value.v;
+          auto block = (adc_pool_type::chunk_type*) evt.value.p;
           uint16_t* data =  (uint16_t*) block->buffer;
           gf1200(data, ADC_BUFFER_SIZE);
           gf2200(data, ADC_BUFFER_SIZE);
@@ -768,6 +550,7 @@ void pollInputTwist()
     DEBUG("exit pollInputTwist");
 }
 
+#if 0
 void streamAverageInputTwist()
 {
     DEBUG("enter streamAverageInputTwist");
@@ -820,7 +603,8 @@ void streamAverageInputTwist()
       g2700 += 10.0 * log10(gf2700);
 
       char* buffer = 0;
-      int len = asiprintf(
+      // @TODO: Make re-entrant printf work (or convert to fixed-point).
+      int len = asiprintf_r(
         &buffer,
         "_%f, %f, %f, %f, %f\r\n",
         g700 / acount,
@@ -884,7 +668,8 @@ void streamInstantInputTwist()
       }
 
       char* buffer = 0;
-      int len = asiprintf(
+      // @TODO: Make re-entrant printf work (or convert to fixed-point).
+      int len = asiprintf_r(
         &buffer,
         "_%f, %f, %f, %f, %f\r\n",
         10.0 * log10(gf700),
@@ -909,6 +694,7 @@ void streamInstantInputTwist()
     stopADC();
     DEBUG("exit streamInstantInputTwist");
 }
+#endif
 
 void streamAmplifiedInputLevels() {
     DEBUG("enter streamAmplifiedInputLevels");
@@ -942,6 +728,7 @@ void pollAmplifiedInputLevel() {
     DEBUG("exit pollAmplifiedInputLevel");
 }
 
+#if 0
 void stop() {
     osDelay(100);
 #if 0
@@ -971,5 +758,6 @@ void stop() {
     DEBUG("Wake");
 #endif
 }
+#endif
 
 }}} // mobilinkd::tnc::audio

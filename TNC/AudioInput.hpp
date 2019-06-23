@@ -28,10 +28,10 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef*);
  * This is the long-running audio input task/thread.  The ADC can be
  * connected to one of 2 inputs:
  *
- * - AMPLIFIED_AUDIO_IN, ADC1_IN7 -- this is the input used by the demodulator.
+ * - AUDIO_IN, ADC1, CHANNEL_8  -- this is the input used by the demodulator.
  * - BATTERY_VOLTAGE -- this is 1/2 raw battery voltage (nominal 1.6-2.1V).
  *    This input should not be enabled unless BAT_DIVIDER is enabled and
- *    pulled low.
+ *    pulled low. *** NOT USED on NucleoTNC ***
  *
  * These inputs can be measured in a couple of different ways:
  * - Vavg -- for the average DC level of the signal
@@ -61,7 +61,6 @@ void TNC_Error_Handler(int dev, int err);
 
 #ifdef __cplusplus
 }
-#endif
 
 namespace mobilinkd { namespace tnc { namespace audio {
 
@@ -90,9 +89,9 @@ extern uint32_t adc_buffer[];       // Two int16_t samples per element.
 
 inline void stopADC() {
     if (HAL_ADC_Stop_DMA(&hadc1) != HAL_OK)
-        Error_Handler();
+        CxxErrorHandler();
     if (HAL_TIM_Base_Stop(&htim6) != HAL_OK)
-        Error_Handler();
+        CxxErrorHandler();
 }
 
 inline void startADC(uint32_t channel) {
@@ -101,23 +100,23 @@ inline void startADC(uint32_t channel) {
     sConfig.Channel = channel;
     sConfig.Rank = ADC_REGULAR_RANK_1;
     sConfig.SingleDiff = ADC_SINGLE_ENDED;
-    sConfig.SamplingTime = ADC_SAMPLETIME_24CYCLES_5;
+    sConfig.SamplingTime = ADC_SAMPLETIME_12CYCLES_5;
     sConfig.OffsetNumber = ADC_OFFSET_NONE;
     sConfig.Offset = 0;
     if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-        Error_Handler();
+        CxxErrorHandler();
 
     if (HAL_TIM_Base_Start(&htim6) != HAL_OK)
-        Error_Handler();
+        CxxErrorHandler();
     if (HAL_ADC_Start_DMA(&hadc1, adc_buffer, ADC_BUFFER_SIZE * 2) != HAL_OK)
-        Error_Handler();
+        CxxErrorHandler();
 }
 
 inline void restartADC() {
     if (HAL_TIM_Base_Start(&htim6) != HAL_OK)
-        Error_Handler();
+        CxxErrorHandler();
     if (HAL_ADC_Start_DMA(&hadc1, adc_buffer, ADC_BUFFER_SIZE * 2) != HAL_OK)
-        Error_Handler();
+        CxxErrorHandler();
 }
 
 /// Vpp, Vavg, Vmin, Vmax
@@ -137,5 +136,7 @@ void streamAverageInputTwist();
 void streamInstantInputTwist();
 
 }}} // mobilinkd::tnc::audio
+
+#endif // __cplusplus
 
 #endif // MOBILINKD__TNC__AUDIO__INPUT_HPP_

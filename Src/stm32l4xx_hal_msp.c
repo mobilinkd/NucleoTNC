@@ -61,7 +61,7 @@ extern DMA_HandleTypeDef hdma_usart2_rx;
 
 extern DMA_HandleTypeDef hdma_usart2_tx;
 
-extern void _Error_Handler(char *, int);
+extern void _Error_Handler(const char *, int);
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */

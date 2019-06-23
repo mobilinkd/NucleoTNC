@@ -1,4 +1,4 @@
-// Copyright 2015 Robert C. Riggs <rob@pangalactic.org>
+// Copyright 2015-2019 Mobilinkd LLC <rob@mobilinkd.com>
 // All rights reserved.
 
 #ifndef MOBILINKD__TNC__AFSK_MODULATOR_HPP_
