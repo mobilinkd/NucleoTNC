@@ -122,6 +122,8 @@ osTimerId beaconTimer4Handle;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+osMutexId hardwareInitMutexHandle;
+
 char serial_number_64[17] = {0};
 char error_message[80] __attribute__((section(".bss3"))) = {0};
 
@@ -228,6 +230,10 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
+  osMutexDef(hardwareInitMutex);
+  hardwareInitMutexHandle = osMutexCreate(osMutex(hardwareInitMutex));
+  osMutexWait(hardwareInitMutexHandle, osWaitForever);
+
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -538,7 +544,7 @@ static void MX_I2C3_Init(void)
 {
 
   hi2c3.Instance = I2C3;
-  hi2c3.Init.Timing = 0x2010091A;
+  hi2c3.Init.Timing = 0x2010091A; // 48MHz CPU, 400kHz i2c
   hi2c3.Init.OwnAddress1 = 0;
   hi2c3.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c3.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;

@@ -109,6 +109,8 @@
 #define CMD_SET_PTT_SIMPLEX 3
 #define CMD_SET_PTT_MULTIPLEX 4
 
+extern void* hardwareInitMutexHandle;
+
 #define CxxErrorHandler() _Error_Handler(const_cast<char*>(__FILE__), __LINE__)
 
 extern char serial_number_64[17];
