@@ -5,7 +5,6 @@
 #define MOBILINKD__TNC__SERIAL_PORT_HPP_
 
 #include "PortInterface.hpp"
-#include "cmsis_os.h"
 
 namespace mobilinkd { namespace tnc {
 
@@ -26,9 +25,10 @@ struct SerialPort : PortInterface
     virtual bool write(hdlc::IoFrame* frame, uint32_t timeout = osWaitForever);
 
     void init();
-
-    bool open_{false};                  // opened/closed
     osMutexId mutex_{0};                // TX Mutex
+
+private:
+    bool open_{false};                  // opened/closed
     osMessageQId queue_{0};             // ISR read queue
     osThreadId serialTaskHandle_{0};
 };

@@ -48,7 +48,7 @@ extern "C" void startSerialTask(void const* arg)
 
     State state = WAIT_FBEGIN;
 
-    hdlc::IoFrame* frame = hdlc::ioFramePool().acquire();
+    hdlc::IoFrame* frame = hdlc::acquire_wait();
 
     HAL_UART_Receive_DMA(&huart2, rxBuffer, RX_BUFFER_SIZE * 2);
     __HAL_UART_ENABLE_IT(&huart2, UART_IT_IDLE);
@@ -83,14 +83,14 @@ extern "C" void startSerialTask(void const* arg)
                 case FEND:
                     frame->source(hdlc::IoFrame::SERIAL_DATA);
                     osMessagePut(ioEventQueueHandle, reinterpret_cast<uint32_t>(frame), osWaitForever);
-                    frame = hdlc::ioFramePool().acquire();
+                    frame = hdlc::acquire_wait();
                     state = WAIT_FBEGIN;
                     break;
                 default:
                     if (not frame->push_back(c)) {
                         hdlc::ioFramePool().release(frame);
                         state = WAIT_FBEGIN;  // Drop frame;
-                        frame = hdlc::ioFramePool().acquire();
+                        frame = hdlc::acquire_wait();
                     }
                 }
                 break;
@@ -101,20 +101,20 @@ extern "C" void startSerialTask(void const* arg)
                     if (not frame->push_back(FESC)) {
                         hdlc::ioFramePool().release(frame);
                         state = WAIT_FBEGIN;  // Drop frame;
-                        frame = hdlc::ioFramePool().acquire();
+                        frame = hdlc::acquire_wait();
                     }
                     break;
                 case TFEND:
                     if (not frame->push_back(FEND)) {
                         hdlc::ioFramePool().release(frame);
                         state = WAIT_FBEGIN;  // Drop frame;
-                        frame = hdlc::ioFramePool().acquire();
+                        frame = hdlc::acquire_wait();
                     }
                     break;
                 default:
                     hdlc::ioFramePool().release(frame);
                     state = WAIT_FBEGIN;  // Drop frame;
-                    frame = hdlc::ioFramePool().acquire();
+                    frame = hdlc::acquire_wait();
                 }
                 break;
             }

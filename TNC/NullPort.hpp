@@ -30,18 +30,17 @@ struct NullPort : PortInterface
         open_ = false;
     }
     virtual osMessageQId queue() const { return 0; }
-    virtual bool write(const uint8_t* data, uint32_t size, uint8_t type,
-        uint32_t timeout)
+    virtual bool write(const uint8_t*, uint32_t, uint8_t, uint32_t)
     {
         return true;
     }
-    virtual bool write(const uint8_t* data, uint32_t size, uint32_t timeout)
+    virtual bool write(const uint8_t*, uint32_t, uint32_t)
     {
         return true;
     }
     virtual bool write(hdlc::IoFrame* frame, uint32_t = osWaitForever)
     {
-        hdlc::ioFramePool().release(frame);
+        hdlc::release(frame);
         return true;
     }
 
