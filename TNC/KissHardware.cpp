@@ -15,7 +15,7 @@ extern I2C_HandleTypeDef hi2c3;
 
 namespace mobilinkd { namespace tnc { namespace kiss {
 
-const char FIRMWARE_VERSION[] = "1.0.0";
+const char FIRMWARE_VERSION[] = "1.0.1";
 const char HARDWARE_VERSION[] = "Mobilinkd Nucleo32 Breadboard TNC";
 
 Hardware& settings()
@@ -67,7 +67,7 @@ inline void reply_ext(uint8_t ext, uint8_t cmd, const uint8_t* data, uint16_t le
     uint8_t* buffer = static_cast<uint8_t*>(alloca(len + 2));
     buffer[0] = ext;
     buffer[1] = cmd;
-    for (uint16_t i = 0; i != len; i++)
+    for (uint16_t i = 0; i != len and data[i] != 0; i++)
         buffer[i + 2] = data[i];
     ioport->write(buffer, len + 2, 6, osWaitForever);
 }
@@ -123,10 +123,11 @@ void Hardware::handle_request(hdlc::IoFrame* frame)
     case hardware::SAVE_EEPROM_SETTINGS:
         update_crc();
         store();
-        reply8(hardware::SAVE_EEPROM_SETTINGS, hardware::OK);
+        reply8(hardware::OK, hardware::SAVE_EEPROM_SETTINGS);
         break;
     case hardware::POLL_INPUT_LEVEL:
         DEBUG("POLL_INPUT_VOLUME");
+        reply8(hardware::POLL_INPUT_LEVEL, 0);
         osMessagePut(audioInputQueueHandle, audio::POLL_AMPLIFIED_INPUT_LEVEL,
             osWaitForever);
         osMessagePut(audioInputQueueHandle, audio::DEMODULATOR,
