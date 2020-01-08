@@ -14,6 +14,7 @@
 #include "ModulatorTask.hpp"
 #include "SerialPort.h"
 #include "Led.h"
+#include "main.h"
 
 #include "stm32l4xx_hal.h"
 #include "cmsis_os.h"
@@ -35,11 +36,13 @@ void startIOEventTask(void const*)
     print_startup_banner();
 
     auto& hardware = kiss::settings();
-    if (!hardware.load())
+    if (!hardware.load() or !hardware.crc_ok())
     {
         hardware.init();
         hardware.store();
     }
+
+    osMutexRelease(hardwareInitMutexHandle);
 
     hardware.debug();
 
