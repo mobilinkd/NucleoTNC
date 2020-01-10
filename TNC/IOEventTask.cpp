@@ -41,6 +41,7 @@ void startIOEventTask(void const*)
         hardware.init();
         hardware.store();
     }
+    hardware.init();
 
     osMutexRelease(hardwareInitMutexHandle);
 

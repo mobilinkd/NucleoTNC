@@ -47,7 +47,7 @@ struct Log {
     Level level_;
 
     Log()
-    : level_(Level::debug)
+    : level_(Level::info)
     {}
 
     Log(Level level)

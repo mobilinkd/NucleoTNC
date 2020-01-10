@@ -4,7 +4,7 @@
 #ifndef INC_HDLCENCODER_HPP_
 #define INC_HDLCENCODER_HPP_
 
-#include "AFSKModulator.hpp"
+#include "Modulator.hpp"
 #include "HdlcFrame.hpp"
 #include "NRZI.hpp"
 #include "PTT.hpp"
@@ -47,11 +47,11 @@ struct Encoder {
     NRZI nrzi_;
     uint16_t crc_;
     osMessageQId input_;
-    AFSKModulator* modulator_;
+    Modulator* modulator_;
     volatile bool running_;
     bool send_delay_;   // Avoid sending the preamble for back-to-back frames.
 
-    Encoder(osMessageQId input, AFSKModulator* output)
+    Encoder(osMessageQId input, Modulator* output)
     : tx_delay_(kiss::settings().txdelay), tx_tail_(kiss::settings().txtail)
     , p_persist_(kiss::settings().ppersist), slot_time_(kiss::settings().slot)
     , duplex_(kiss::settings().duplex), state_(state_type::STATE_IDLE)
@@ -192,7 +192,7 @@ struct Encoder {
     }
 
     void send_delay() {
-        const size_t tmp = (tx_delay_ * 3) / 2;
+        const size_t tmp = tx_delay_ * modulator_->bits_per_ms();
         for (size_t i = 0; i != tmp; i++) {
             send_raw(IDLE);
         }

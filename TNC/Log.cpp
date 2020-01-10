@@ -28,7 +28,7 @@ namespace mobilinkd { namespace tnc {
 #ifdef KISS_LOGGING
 
 Log& log(void) {
-    static Log log(Log::Level::debug);
+    static Log log(Log::Level::info);
     return log;
 }
 

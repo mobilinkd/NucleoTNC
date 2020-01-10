@@ -2,7 +2,9 @@
 // All rights reserved.
 
 #include "AudioInput.hpp"
-#include "AfskDemodulator.hpp"
+#include "Demodulator.hpp"
+#include "Afsk1200Demodulator.hpp"
+#include "Fsk9600Demodulator.hpp"
 #include "AudioLevel.hpp"
 #include "Log.h"
 #include "KissHardware.hpp"
@@ -10,7 +12,6 @@
 #include "HdlcFrame.hpp"
 #include "memory.hpp"
 #include "IirFilter.hpp"
-#include "FilterCoefficients.hpp"
 #include "PortInterface.hpp"
 #include "Goertzel.h"
 #include "Led.h"
@@ -128,96 +129,33 @@ extern "C" void startAudioInputTask(void const*) {
 
 namespace mobilinkd { namespace tnc { namespace audio {
 
-/*
- * Generated with Scipy Filter, 152 coefficients, 1100-2300Hz bandpass,
- * Hann window, starting and ending 0 value coefficients removed.
- *
- * np.array(
- *  firwin2(152,
- *      [
- *          0.0,
- *          1000.0/(sample_rate/2),
- *          1100.0/(sample_rate/2),
- *          2350.0/(sample_rate/2),
- *          2500.0/(sample_rate/2),
- *          1.0
- *      ],
- *      [0,0,1,1,0,0],
- *      antisymmetric = False,
- *      window='hann') * 32768,
- *  dtype=int)[10:-10]
- */
-constexpr size_t FILTER_TAP_NUM = 132;
-const q15_t bpf_coeffs[] = {
-    4,     0,    -5,   -10,   -13,   -12,    -9,    -4,    -2,    -4,   -12,   -26,
-  -41,   -52,   -51,   -35,    -3,    39,    83,   117,   131,   118,    83,    36,
-   -6,   -32,   -30,    -3,    36,    67,    66,    19,   -74,  -199,  -323,  -408,
- -421,  -344,  -187,    17,   218,   364,   417,   369,   247,   106,    14,    26,
-  166,   407,   676,   865,   866,   605,    68,  -675, -1484, -2171, -2547, -2471,
--1895,  -882,   394,  1692,  2747,  3337,  3337,  2747,  1692,   394,  -882, -1895,
--2471, -2547, -2171, -1484,  -675,    68,   605,   866,   865,   676,   407,   166,
-   26,    14,   106,   247,   369,   417,   364,   218,    17,  -187,  -344,  -421,
- -408,  -323,  -199,   -74,    19,    66,    67,    36,    -3,   -30,   -32,    -6,
-   36,    83,   118,   131,   117,    83,    39,    -3,   -35,   -51,   -52,   -41,
-  -26,   -12,    -4,    -2,    -4,    -9,   -12,   -13,   -10,    -5,     0,     4,
-};
-
 uint32_t adc_buffer[ADC_BUFFER_SIZE];       // Two samples per element.
-
-typedef Q15FirFilter<ADC_BUFFER_SIZE, FILTER_TAP_NUM> audio_filter_type;
-
-audio_filter_type audio_filter;
-
-mobilinkd::tnc::afsk1200::emphasis_filter_type filter_1;
-mobilinkd::tnc::afsk1200::emphasis_filter_type filter_2;
-mobilinkd::tnc::afsk1200::emphasis_filter_type filter_3;
-
-mobilinkd::tnc::afsk1200::Demodulator& getDemod1(const TFirCoefficients<9>& f) __attribute__((noinline));
-mobilinkd::tnc::afsk1200::Demodulator& getDemod2(const TFirCoefficients<9>& f) __attribute__((noinline));
-mobilinkd::tnc::afsk1200::Demodulator& getDemod3(const TFirCoefficients<9>& f) __attribute__((noinline));
-
-mobilinkd::tnc::afsk1200::Demodulator& getDemod1(const TFirCoefficients<9>& f) {
-    filter_1.init(f);
-    static mobilinkd::tnc::afsk1200::Demodulator instance(26400, filter_1);
-    return instance;
-}
-
-mobilinkd::tnc::afsk1200::Demodulator& getDemod2(const TFirCoefficients<9>& f) {
-    filter_2.init(f);
-    static mobilinkd::tnc::afsk1200::Demodulator instance(26400, filter_2);
-    return instance;
-}
-
-mobilinkd::tnc::afsk1200::Demodulator& getDemod3(const TFirCoefficients<9>& f) {
-    filter_3.init(f);
-    static mobilinkd::tnc::afsk1200::Demodulator instance(26400, filter_3);
-    return instance;
-}
-
 q15_t normalized[ADC_BUFFER_SIZE];
+
+Afsk1200Demodulator afsk1200;
+Fsk9600Demodulator fsk9600;
 
 void demodulatorTask() {
 
     DEBUG("enter demodulatorTask");
 
-    audio_filter.init(bpf_coeffs);
-
-    // rx_twist is 6dB for discriminator input and 0db for de-emphasized input.
-    auto twist = kiss::settings().rx_twist;
-
-    mobilinkd::tnc::afsk1200::Demodulator& demod1 = getDemod1(*filter::fir::AfskFilters[twist + 3]);
-    mobilinkd::tnc::afsk1200::Demodulator& demod2 = getDemod2(*filter::fir::AfskFilters[twist + 6]);
-    mobilinkd::tnc::afsk1200::Demodulator& demod3 = getDemod3(*filter::fir::AfskFilters[twist + 9]);
-
-    startADC(AUDIO_IN);
-
-    mobilinkd::tnc::hdlc::IoFrame* frame = 0;
-
-    uint16_t last_fcs = 0;
-    uint32_t last_counter = 0;
-    uint32_t counter = 0;
-
     bool dcd_status{false};
+    IDemodulator* demodulator{nullptr};
+
+    switch (kiss::settings().modem_type)
+    {
+    case kiss::Hardware::ModemType::AFSK1200:
+        demodulator = &afsk1200;
+        break;
+    case kiss::Hardware::ModemType::FSK9600:
+        demodulator = &fsk9600;
+        break;
+    default:
+        ERROR("Invalid demodulator");
+        return;
+    }
+
+    demodulator->start();
 
     while (true) {
         osEvent peek = osMessagePeek(audioInputQueueHandle, 0);
@@ -228,80 +166,35 @@ void demodulatorTask() {
             continue;
         }
 
-        ++counter;
-
+        led_other_on();
         auto block = (adc_pool_type::chunk_type*) evt.value.p;
         auto samples = (int16_t*) block->buffer;
 
         arm_offset_q15(samples, 0 - virtual_ground, normalized, ADC_BUFFER_SIZE);
         adcPool.deallocate(block);
-        q15_t* audio = audio_filter(normalized);
 
-#if 1
-        frame = demod1(audio, ADC_BUFFER_SIZE);
-        if (frame) {
-            if (frame->fcs() != last_fcs or counter > last_counter + 2) {
-                auto save_fcs = frame->fcs();
-                if (osMessagePut(ioEventQueueHandle, (uint32_t) frame, 1) == osOK) {
-                  last_fcs = save_fcs;
-                  last_counter = counter;
-                } else {
-                  hdlc::release(frame);
-                }
-            }
-            else {
+        auto frame = (*demodulator)(normalized);
+        if (frame)
+        {
+            if (osMessagePut(ioEventQueueHandle, (uint32_t) frame, 1) != osOK)
+            {
                 hdlc::release(frame);
             }
         }
-#endif
 
-#if 1
-        frame = demod2(audio, ADC_BUFFER_SIZE);
-        if (frame) {
-          if (frame->fcs() != last_fcs or counter > last_counter + 2) {
-              auto save_fcs = frame->fcs();
-              if (osMessagePut(ioEventQueueHandle, (uint32_t) frame, 1) == osOK) {
-                last_fcs = save_fcs;
-                last_counter = counter;
-              } else {
-                hdlc::release(frame);
-              }
-          }
-          else {
-              hdlc::release(frame);
-          }
-        }
-#endif
-
-#if 1
-        frame = demod3(audio, ADC_BUFFER_SIZE);
-        if (frame) {
-          if (frame->fcs() != last_fcs or counter > last_counter + 2) {
-              auto save_fcs = frame->fcs();
-              if (osMessagePut(ioEventQueueHandle, (uint32_t) frame, 1) == osOK) {
-                last_fcs = save_fcs;
-                last_counter = counter;
-              } else {
-                hdlc::release(frame);
-              }
-          }
-          else {
-              hdlc::release(frame);
-          }
-        }
-#endif
-        bool new_dcd_status = demod1.locked() or demod2.locked() or demod3.locked();
-        if (new_dcd_status xor dcd_status) {
-            dcd_status = new_dcd_status;
+        if (demodulator->locked() xor dcd_status) {
+            dcd_status = demodulator->locked();
             if (dcd_status) {
                 led_dcd_on();
             } else {
                 led_dcd_off();
             }
         }
+        led_other_off();
     }
 
-    stopADC();
+    demodulator->stop();
+
     led_dcd_off();
     DEBUG("exit demodulatorTask");
 }

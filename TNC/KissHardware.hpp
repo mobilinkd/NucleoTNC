@@ -270,7 +270,7 @@ struct Hardware
       slot = 10;
       txtail = 1;
       duplex = 0;
-      modem_type = ModemType::AFSK1200;
+      modem_type = ModemType::FSK9600;
       output_gain = 63;
       input_gain = 0;   // 0-4 on TNC3
       tx_twist = 50;

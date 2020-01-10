@@ -199,7 +199,7 @@ void setAudioOutputLevel()
   } else {
       gpio::AUDIO_OUT_ATTEN::off();
   }
-  getModulator().set_volume(r);
+  getModulator().set_gain(r);
 }
 
 }}} // mobilinkd::tnc::audio

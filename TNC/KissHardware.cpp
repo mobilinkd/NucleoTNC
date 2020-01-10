@@ -264,7 +264,7 @@ void Hardware::handle_request(hdlc::IoFrame* frame)
         if (tx_twist < 0) tx_twist = 0;
         if (tx_twist > 100) tx_twist = 100;
         DEBUG("SET_OUTPUT_TWIST: %d", int(tx_twist));
-        getModulator().set_twist(uint8_t(tx_twist));
+        getModulator().init(*this);
         update_crc();
         [[fallthrough]];
     case hardware::GET_OUTPUT_TWIST:
