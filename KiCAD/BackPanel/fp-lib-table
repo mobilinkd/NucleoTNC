@@ -1,0 +1,3 @@
+(fp_lib_table
+  (lib (name KiCAD)(type KiCad)(uri /home/rob/workspace/Nucleo_L432KC_TNC/KiCAD)(options "")(descr ""))
+)
