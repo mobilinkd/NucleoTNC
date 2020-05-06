@@ -1,22 +1,17 @@
-EESchema Schematic File Version 5
+EESchema Schematic File Version 4
 EELAYER 30 0
 EELAYER END
-$Descr A4 11693 8268
+$Descr USLetter 11000 8500
 encoding utf-8
 Sheet 1 1
 Title "NucleoTNC PCB"
-Date "2020-01-20"
-Rev "A"
+Date "2020-05-06"
+Rev "B"
 Comp "Mobilinkd TNC"
 Comment1 "Based on Nucleo32 Breadboard TNC Project"
 Comment2 "STM32L432 Nucleo32 Board"
 Comment3 ""
 Comment4 ""
-Comment5 ""
-Comment6 ""
-Comment7 ""
-Comment8 ""
-Comment9 ""
 $EndDescr
 $Comp
 L Amplifier_Operational:MCP6004 U1
@@ -407,7 +402,7 @@ L Device:C C1
 U 1 1 5D0E12F1
 P 1350 3250
 F 0 "C1" V 1098 3250 50  0000 C CNN
-F 1 "0.22uF" V 1189 3250 50  0000 C CNN
+F 1 "1uF" V 1189 3250 50  0000 C CNN
 F 2 "Capacitor_THT:C_Disc_D6.0mm_W2.5mm_P5.00mm" H 1388 3100 50  0001 C CNN
 F 3 "~" H 1350 3250 50  0001 C CNN
 	1    1350 3250
@@ -1429,12 +1424,12 @@ Connection ~ 9000 6200
 $Comp
 L Graphic:Logo_Open_Hardware_Large #LOGO1
 U 1 1 5E257C0A
-P 10600 5700
-F 0 "#LOGO1" H 10600 6200 50  0001 C CNN
-F 1 "Logo_Open_Hardware_Large" H 10600 5300 50  0001 C CNN
-F 2 "" H 10600 5700 50  0001 C CNN
-F 3 "~" H 10600 5700 50  0001 C CNN
-	1    10600 5700
+P 5300 7400
+F 0 "#LOGO1" H 5300 7900 50  0001 C CNN
+F 1 "Logo_Open_Hardware_Large" H 5300 7000 50  0001 C CNN
+F 2 "" H 5300 7400 50  0001 C CNN
+F 3 "~" H 5300 7400 50  0001 C CNN
+	1    5300 7400
 	1    0    0    -1  
 $EndComp
 $Comp
