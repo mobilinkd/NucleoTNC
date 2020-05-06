@@ -12,8 +12,8 @@
   (page USLetter)
   (title_block
     (title "NucleoTNC Rear Panel")
-    (date 2020-03-18)
-    (rev A)
+    (date 2020-05-05)
+    (rev B)
     (company "Mobilinkd LLC")
     (comment 1 "71mm Width")
   )
