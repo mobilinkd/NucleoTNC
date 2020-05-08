@@ -2,7 +2,7 @@
 
   (general
     (thickness 1.6)
-    (drawings 13)
+    (drawings 17)
     (tracks 0)
     (zones 0)
     (modules 0)
@@ -70,7 +70,7 @@
     (aux_axis_origin 0 0)
     (visible_elements FFFFFF7F)
     (pcbplotparams
-      (layerselection 0x010f0_7ffffffe)
+      (layerselection 0x210e0_7ffffffe)
       (usegerberextensions false)
       (usegerberattributes false)
       (usegerberadvancedattributes false)
@@ -109,6 +109,12 @@
     (uvia_drill 0.1)
   )
 
+  (gr_text "Please place Production Code here on front silkscreen." (at 164 81.75) (layer F.Fab)
+    (effects (font (size 1 1) (thickness 0.15)))
+  )
+  (gr_line (start 164 82.5) (end 165.25 82.5) (layer F.Fab) (width 0.15))
+  (gr_line (start 161.5 84.5) (end 164 82.5) (layer F.Fab) (width 0.15))
+  (gr_circle (center 161 84.75) (end 161 85.25) (layer F.Fab) (width 0.15))
   (dimension 18 (width 0.15) (layer Dwgs.User)
     (gr_text "18.000 mm" (at 160.5 92.05) (layer Dwgs.User)
       (effects (font (size 1 1) (thickness 0.15)))
@@ -126,7 +132,7 @@
   (gr_line (start 152 86.5) (end 169 86.5) (layer Edge.Cuts) (width 0.05) (tstamp 5EB21275))
   (gr_line (start 152 85.5) (end 169 85.5) (layer Edge.Cuts) (width 0.05))
   (dimension 4 (width 0.12) (layer Dwgs.User) (tstamp 5EB211EA)
-    (gr_text "4.000 mm" (at 176.77 86 270) (layer Dwgs.User) (tstamp 5EB2120B)
+    (gr_text "4.000 mm" (at 176.77 86 270) (layer Dwgs.User) (tstamp 5EB211EA)
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (feature1 (pts (xy 165.75 88) (xy 176.086421 88)))
