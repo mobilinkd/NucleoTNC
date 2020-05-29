@@ -1,0 +1,7 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP NUCLEO-L432KC
+F NUCLEO-F303K8
+$ENDCMP
+#
+#End Doc Library
