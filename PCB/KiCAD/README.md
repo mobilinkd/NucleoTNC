@@ -116,8 +116,62 @@ the components on the PCB.
 
 The new items are the last 6 items on the list.  There are two additional 470 Ohm resister (6 instead of 4) in the BOM.
 
+You can explore the PCB via an [interactive BOM](bom/ibom.html).  Please note that it does not show the two DIP sockets.
+
+## Equipment
+
+You will need the following equipment to assemble, test and use the TNC.
+
+ 1. Soldering Iron
+ 1. Solder (preferrably 0.5mm rosin core)
+ 1. A digital multi-meter (DMM) with Voltage, Resistance, Continuity, Diode
+    and Capacitance testing capabiility. (Something like an ANENG AN8008
+    will work.)
+ 1. Anti-static mat and wrist strap.
+ 1. A micro-USB cable.
+ 1. A computer running Linux, OS X, or Windows 10.
+ 1. A 2mm hex driver or allen wrench if you are building the enclosure.
+ 
+
 ## Assembly
 
+Assemble the items on a grounded anti-static mat.
+
+Use the [interactive BOM](bom/ibom.html) (use ctrl-click on the link to open
+it in another tab).  Install the items in the order listed on the interactive
+BOM.  This makes it easier to solder multiple components to the board without
+having them fall out, because the BOM is sorted roughly by component height.
+
+**The diodes, ICs, MOSFETs and Nucleo32 module are easily damaged by
+electro-static discharge.  Use an anti-static wrist strap that is well-grounded
+when handling the diodes, ICs, MOSFETs and Nucleo32 module, and when handling
+the PCB after these items have been installed.**
+
+When it comes to installing the two ICs, U1 and U2, install the IC sockets
+only.  Install the ICs into the sockets after the reset switch has been
+soldered to the board.
+
+The final step is to install the Nucleo32 board.  Place the two spacers across
+the pairs of pins on either end of the module.  It may be easier to place the
+PCB on its side when inserting the module to keep the spacers from falling
+off.  The pins are staggered.  It should require a little bit of force to get
+the module inserted.  Once inserted, the pins should make solid contact with
+the PCB -- solid enough for initial testing.
+
+## Testing
+
+**Note: when inserting a USB cable into the Nucleo32 module, make sure that
+the USB cable does not apply any torque to the module as this can negatively
+affect the press-fit connection with the PCB.**
+
+We are going to connect the TNC to the computer via USB.  Plug the micro-USB
+cable into the computer.
+
+Insert a USB cable into the Nucleo32 module.  You should see the blue LED
+light up.  This indicates that the board is powered.
+
+You should also see a drive mounted on the computer and a USB serial port
+created.
 
 
 
