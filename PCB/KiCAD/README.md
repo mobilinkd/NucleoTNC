@@ -116,7 +116,8 @@ the components on the PCB.
 
 The new items are the last 6 items on the list.  There are two additional 470 Ohm resister (6 instead of 4) in the BOM.
 
-You can explore the PCB via an [interactive BOM](bom/ibom.html).  Please note that it does not show the two DIP sockets.
+You can explore the PCB via an [interactive BOM](https://htmlpreview.github.io/?https://github.com/mobilinkd/NucleoTNC/blob/master/PCB/KiCAD/bom/ibom.html).
+Please note that it does not show the two DIP sockets.
 
 ## Equipment
 
@@ -137,10 +138,11 @@ You will need the following equipment to assemble, test and use the TNC.
 
 Assemble the items on a grounded anti-static mat.
 
-Use the [interactive BOM](bom/ibom.html) (use ctrl-click on the link to open
-it in another tab).  Install the items in the order listed on the interactive
-BOM.  This makes it easier to solder multiple components to the board without
-having them fall out, because the BOM is sorted roughly by component height.
+Use the [interactive BOM](https://htmlpreview.github.io/?https://github.com/mobilinkd/NucleoTNC/blob/master/PCB/KiCAD/bom/ibom.html)
+(use ctrl-click on the link to open it in another tab).  Install the items in
+the order listed on the interactive BOM.  This makes it easier to solder
+multiple components to the board without having them fall out, because the
+BOM is sorted roughly by component height.
 
 **The diodes, ICs, MOSFETs and Nucleo32 module are easily damaged by
 electro-static discharge.  Use an anti-static wrist strap that is well-grounded
