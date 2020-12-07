@@ -363,10 +363,13 @@ void SystemClock_Config(void)
 
     /**Initializes the CPU, AHB and APB busses clocks 
     */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSE|RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSE
+      |RCC_OSCILLATORTYPE_MSI|RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.LSEState = RCC_LSE_ON;
   RCC_OscInitStruct.MSIState = RCC_MSI_ON;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.MSICalibrationValue = 0;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
@@ -397,7 +400,7 @@ void SystemClock_Config(void)
   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_USART2
                               |RCC_PERIPHCLK_I2C3|RCC_PERIPHCLK_ADC;
   PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
-  PeriphClkInit.I2c3ClockSelection = RCC_I2C3CLKSOURCE_PCLK1;
+  PeriphClkInit.I2c3ClockSelection = RCC_I2C3CLKSOURCE_HSI;
   PeriphClkInit.AdcClockSelection = RCC_ADCCLKSOURCE_PLLSAI1;
   PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
   PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_MSI;
@@ -544,7 +547,7 @@ static void MX_I2C3_Init(void)
 {
 
   hi2c3.Instance = I2C3;
-  hi2c3.Init.Timing = 0x00702991; // 80MHz CPU, 400kHz i2c
+  hi2c3.Init.Timing = 0x0010061A; // 16MHz HSI, 400kHz i2c
   hi2c3.Init.OwnAddress1 = 0;
   hi2c3.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c3.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -571,7 +574,7 @@ static void MX_I2C3_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-    /**I2C Fast mode Plus enable 
+    /**I2C Fast mode Plus enable
     */
   HAL_I2CEx_EnableFastModePlus(I2C_FASTMODEPLUS_I2C3);
 

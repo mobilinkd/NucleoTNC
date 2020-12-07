@@ -18,6 +18,13 @@ namespace mobilinkd { namespace tnc { namespace kiss {
 const char FIRMWARE_VERSION[] = "1.0.1";
 const char HARDWARE_VERSION[] = "Mobilinkd Nucleo32 Breadboard TNC";
 
+const std::array<const char*, 4> modem_type_lookup = {
+    "NOT SET",
+    "AFSK1200",
+    "AFSK300",
+    "FSK9600",
+};
+
 Hardware& settings()
 {
     static Hardware instance __attribute__((section(".bss3")));
@@ -297,6 +304,26 @@ void Hardware::handle_request(hdlc::IoFrame* frame)
     case hardware::GET_DUPLEX:
         DEBUG("GET_DUPLEX");
         reply8(hardware::GET_DUPLEX, duplex);
+        break;
+
+    case hardware::SET_MODEM_TYPE:
+        DEBUG("SET_MODEM_TYPE");
+        if ((*it > 0) and (*it < 4))
+        {
+            modem_type = *it;
+            DEBUG(modem_type_lookup[*it]);
+            update_crc();
+        }
+        else
+        {
+            ERROR("Unknown modem type");
+        }
+        osMessagePut(audioInputQueueHandle, audio::UPDATE_SETTINGS,
+            osWaitForever);
+        [[fallthrough]];
+    case hardware::GET_MODEM_TYPE:
+        DEBUG("GET_MODEM_TYPE");
+        reply8(hardware::GET_MODEM_TYPE, modem_type);
         break;
 
     case hardware::GET_FIRMWARE_VERSION:

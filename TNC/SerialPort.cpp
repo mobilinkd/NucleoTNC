@@ -136,6 +136,7 @@ extern "C" void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
     auto block = serialPool.allocate();
     if (!block) return;
     memmove(block->buffer + 1, rxBuffer, len);
+    block->buffer[0] = static_cast<uint8_t>(len);
     auto status = osMessagePut(mobilinkd::tnc::getSerialPort()->queue(), (uint32_t) block, 0);
     if (status != osOK) serialPool.deallocate(block);
 }
@@ -148,6 +149,7 @@ extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     auto block = serialPool.allocate();
     if (!block) return;
     memmove(block->buffer + 1, rxBuffer + RX_BUFFER_SIZE, len);
+    block->buffer[0] = static_cast<uint8_t>(len);
     auto status = osMessagePut(mobilinkd::tnc::getSerialPort()->queue(), (uint32_t) block, 0);
     if (status != osOK) serialPool.deallocate(block);
 }

@@ -92,6 +92,9 @@ constexpr const uint8_t GET_TIMESLOT = 35;
 constexpr const uint8_t GET_TXTAIL = 36;
 constexpr const uint8_t GET_DUPLEX = 37;
 
+constexpr const uint8_t SET_MODEM_TYPE = 38;
+constexpr const uint8_t GET_MODEM_TYPE = 39;
+
 constexpr const uint8_t GET_FIRMWARE_VERSION = 40;
 constexpr const uint8_t GET_HARDWARE_VERSION = 41;
 constexpr const uint8_t SAVE_EEPROM_SETTINGS = 42;

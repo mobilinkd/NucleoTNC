@@ -102,7 +102,7 @@ struct BaseDigitalPLL
             const float_type abs_offset = std::abs(offset) + adjust;
 			jitter_ = lock_filter_(abs_offset);
 
-			count_ -= jitter / 2;
+			count_ -= jitter / 4;
 
             bits_ = 1;
 		} else {
