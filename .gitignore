@@ -69,3 +69,7 @@ fp-info-cache
 #
 *.FCStd1
 
+# Python Notebook
+#
+.ipynb_checkpoints
+

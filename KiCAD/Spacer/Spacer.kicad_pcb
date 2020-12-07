@@ -2,7 +2,7 @@
 
   (general
     (thickness 1.6)
-    (drawings 17)
+    (drawings 18)
     (tracks 0)
     (zones 0)
     (modules 0)
@@ -109,6 +109,18 @@
     (uvia_drill 0.1)
   )
 
+  (dimension 21.001488 (width 0.15) (layer Dwgs.User)
+    (gr_text "21.001 mm" (at 160.625508 96.417645 0.6820603932) (layer Dwgs.User)
+      (effects (font (size 1 1) (thickness 0.15)))
+    )
+    (feature1 (pts (xy 171 85.75) (xy 171.117013 95.579116)))
+    (feature2 (pts (xy 150 86) (xy 150.117013 95.829116)))
+    (crossbar (pts (xy 150.110033 95.242737) (xy 171.110033 94.992737)))
+    (arrow1a (pts (xy 171.110033 94.992737) (xy 169.99059 95.592526)))
+    (arrow1b (pts (xy 171.110033 94.992737) (xy 169.976628 94.419768)))
+    (arrow2a (pts (xy 150.110033 95.242737) (xy 151.243438 95.815706)))
+    (arrow2b (pts (xy 150.110033 95.242737) (xy 151.229476 94.642948)))
+  )
   (gr_text "Please place Production Code here on front silkscreen." (at 164 81.75) (layer F.Fab)
     (effects (font (size 1 1) (thickness 0.15)))
   )
