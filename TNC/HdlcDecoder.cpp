@@ -7,48 +7,6 @@
 
 namespace mobilinkd { namespace tnc { namespace hdlc {
 
-Decoder::Decoder(bool pass_all)
-: state_(SEARCH), ones_(0), buffer_(0), frame_(acquire())
-, bits_(0), passall_(pass_all), ready_(false)
-{}
-
-IoFrame* Decoder::operator()(bool bit, bool pll)
-{
-    IoFrame* result = nullptr;
-
-    // It appears that the ioFramePool may not get initialized in the proper
-    // order during some builds.
-    if (nullptr == frame_) frame_ = acquire();
-    if (nullptr == frame_) return result;
-
-    if (not pll) {
-        if ((state_ == FRAMING) and (frame_->size() >= 15) and passall_) {
-            frame_->parse_fcs();
-            if (passall_ or frame_->ok()) {
-                result = frame_;
-                ready_ = false;
-                frame_ = acquire();
-                return result;
-            }
-        }
-        reset();
-    } else {
-        if (process(bit)) {
-            ready_ = false;
-            frame_->parse_fcs();
-            if (passall_ or frame_->ok()) {
-                result = frame_;
-                frame_ = acquire();
-                if (frame_) start_hunt();
-                return result;
-            }
-            frame_->clear();
-        }
-    }
-
-    return result;
-}
-
 NewDecoder::optional_result_type NewDecoder::operator()(bool input, bool pll_lock)
 {
     optional_result_type result = nullptr;
@@ -56,9 +14,8 @@ NewDecoder::optional_result_type NewDecoder::operator()(bool input, bool pll_loc
     auto status = process(input, pll_lock);
     if (status)
     {
-//        INFO("Frame Status = %02x, size = %d, CRC = %04x",
-//            int(status), int(packet->size()), int(packet->crc()));
-        if (((status & STATUS_OK) || passall) && packet->size() > 10)
+        INFO("HDLC decode status = 0x%02x, bits = %d", int(status), int(report_bits));
+        if (can_pass(status) and packet->size() > 2)
         {
             result = packet;
             packet = nullptr;
@@ -74,12 +31,14 @@ uint8_t NewDecoder::process(bool input, bool pll_lock)
 {
     uint8_t result_code = 0;
 
+    if (state == State::IDLE and not pll_lock) return result_code;
+
     while (packet == nullptr) {
         packet = ioFramePool().acquire();
         if (!packet) osThreadYield();
     }
 
-    if (pll_lock) {
+    if (pll_lock or dcd != DCD::ON) {
         if (ones == 5) {
             if (input) {
                 // flag byte
@@ -91,6 +50,8 @@ uint8_t NewDecoder::process(bool input, bool pll_lock)
                 return result_code;
             }
         }
+
+        had_dcd |= pll_lock;
 
         buffer >>= 1;
         buffer |= (input * 128);
@@ -104,13 +65,36 @@ uint8_t NewDecoder::process(bool input, bool pll_lock)
         if (flag) {
             switch (buffer) {
             case 0x7E:
-                if (packet->size()) {
+                if (packet->size() > 2) {
+                    // We have started decoding a packet.
                     packet->parse_fcs();
-                    result_code = packet->ok() ? STATUS_OK : STATUS_CRC_ERROR;
+                    report_bits = bits;
+                    if (dcd == DCD::PARTIAL and not had_dcd) {
+                        // 120 (136) bits per AX.25 section 3.9.
+                        // Note we discard the flags.
+                        result_code = STATUS_NO_CARRIER;
+                    } else if (packet->ok()) {
+                        // Not compliant with AX.25 section 3.9.
+                        // We ignore byte alignment when FCS is OK.
+                        result_code = STATUS_OK;
+                    } else if (bits == 8) {
+                        // Otherwise, if there is a CRC error but we are on
+                        // an even byte boundary, flag a CRC error.  This is
+                        // used by the "pass all" rule.
+                        // Must be byte-aligned per AX.25 section 3.9.
+                        result_code = STATUS_CRC_ERROR;
+                    } else {
+                        // Extraneous bits mean we have a framing error.
+                        // We should not pass this frame up the stack.
+                        result_code = STATUS_FRAME_ERROR;
+                    }
+                } else {
+                    packet->clear();
                 }
                 state = State::SYNC;
                 flag = 0;
                 bits = 0;
+                had_dcd = false;
                 break;
             case 0xFE:
                 if (packet->size()) {
@@ -127,7 +111,8 @@ uint8_t NewDecoder::process(bool input, bool pll_lock)
             return result_code;
         }
 
-        switch (state) {
+        switch (state)
+        {
 
         case State::IDLE:
             break;
@@ -149,10 +134,33 @@ uint8_t NewDecoder::process(bool input, bool pll_lock)
         }
     } else {
         // PLL unlocked.
-        if (packet->size()) {
+        // Note the rules here are the same as above.
+        report_bits = bits;
+        had_dcd = false;
+        if (packet->size() > 2)
+        {
             packet->parse_fcs();
-            result_code = packet->ok() ? STATUS_OK | STATUS_NO_CARRIER : STATUS_NO_CARRIER;
+            if (packet->ok())
+            {
+                // Not compliant with AX.25 section 3.9.
+                // We ignore byte alignment when FCS is OK.
+                result_code = STATUS_OK;
+            }
+            else if (bits == 8)
+            {
+                // Must be byte-aligned per AX.25 section 3.9.
+                result_code = STATUS_CRC_ERROR;
+            }
+            else
+            {
+                result_code = STATUS_NO_CARRIER;
+            }
         }
+        else
+        {
+            packet->clear();
+        }
+
         if (state != State::IDLE) {
             buffer = 0;
             flag = 0;

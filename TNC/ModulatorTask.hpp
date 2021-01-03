@@ -1,27 +1,31 @@
-// Copyright 2015 Mobilinkd LLC <rob@mobilinkd.com>
+// Copyright 2015-2020 Mobilinkd LLC <rob@mobilinkd.com>
 // All rights reserved.
 
+#pragma once
 
-#ifndef MOBILINKD__MODULATOR_TASK_HPP_
-#define MOBILINKD__MODULATOR_TASK_HPP_
-
-#include "HDLCEncoder.hpp"
-#include "AFSKModulator.hpp"
 #include "PTT.hpp"
+#include "Encoder.h"
 #include "cmsis_os.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+namespace mobilinkd { namespace tnc {
+
+class Modulator;
+
+namespace hdlc {
+class Encoder;
+}
+
+}}
+
 extern mobilinkd::tnc::SimplexPTT simplexPtt;
 extern mobilinkd::tnc::MultiplexPTT multiplexPtt;
 
-extern mobilinkd::tnc::AFSKModulator* modulator;
-extern mobilinkd::tnc::hdlc::Encoder* encoder;
-
-mobilinkd::tnc::AFSKModulator& getModulator();
-mobilinkd::tnc::hdlc::Encoder& getEncoder();
+mobilinkd::tnc::Modulator& getModulator();
+mobilinkd::Encoder& getEncoder();
 
 void startModulatorTask(void const * argument);
 
@@ -30,9 +34,8 @@ enum class PTT {SIMPLEX, MULTIPLEX};
 void setPtt(PTT ptt);
 
 void updatePtt(void);
+void updateModulator(void);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif // MOBILINKD__MODULATOR_TASK_HPP_

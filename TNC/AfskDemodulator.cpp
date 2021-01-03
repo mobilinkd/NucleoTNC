@@ -1,4 +1,4 @@
-// Copyright 2017-2019 Rob Riggs <rob@mobilinkd.com>
+// Copyright 2017-2020 Rob Riggs <rob@mobilinkd.com>
 // All rights reserved.
 
 #include "AfskDemodulator.hpp"

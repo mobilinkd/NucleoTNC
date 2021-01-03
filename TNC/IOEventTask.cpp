@@ -1,4 +1,4 @@
-// Copyright 2017-2019 Rob Riggs <rob@mobilinkd.com>
+// Copyright 2017-2021 Rob Riggs <rob@mobilinkd.com>
 // All rights reserved.
 
 #include "AudioLevel.hpp"
@@ -12,8 +12,8 @@
 #include "Kiss.hpp"
 #include "KissHardware.hpp"
 #include "ModulatorTask.hpp"
-#include "SerialPort.h"
-#include "Led.h"
+#include "Modulator.hpp"
+#include "LEDIndicator.h"
 
 #include "stm32l4xx_hal.h"
 #include "cmsis_os.h"
@@ -29,17 +29,20 @@ void startIOEventTask(void const*)
 {
     using namespace mobilinkd::tnc;
 
+    indicate_on();
     initSerial();
     openSerial();
 
     print_startup_banner();
 
     auto& hardware = kiss::settings();
-    if (!hardware.load())
+    if (!hardware.load() or !hardware.crc_ok())
     {
         hardware.init();
         hardware.store();
     }
+
+    osMutexRelease(hardwareInitMutexHandle);
 
     hardware.debug();
 
@@ -50,6 +53,8 @@ void startIOEventTask(void const*)
 
     osMessagePut(audioInputQueueHandle, mobilinkd::tnc::audio::DEMODULATOR,
         osWaitForever);
+
+    indicate_waiting_to_connect();
 
     /* Infinite loop */
     for (;;)
@@ -90,18 +95,23 @@ void startIOEventTask(void const*)
 
         auto frame = static_cast<IoFrame*>(evt.value.p);
 
-        switch (frame->source()) {
-        case IoFrame::RF_DATA:
-//      DEBUG("RF frame");
+        if (frame->source() & IoFrame::RF_DATA)
+        {
+            DEBUG("RF frame");
+            frame->source(frame->source() & 0x70);
             if (!ioport->write(frame, 100))
             {
                 ERROR("Timed out sending frame");
+                // The frame has been passed to the write() call.  It owns it now.
+                // hdlc::release(frame);
             }
-            break;
-        case IoFrame::SERIAL_DATA:
-//      DEBUG("Serial frame");
+        }
+        else
+        {
+            DEBUG("Serial frame");
             if ((frame->type() & 0x0F) == IoFrame::DATA)
             {
+                kiss::getAFSKTestTone().stop();
                 if (osMessagePut(hdlcOutputQueueHandle,
                     reinterpret_cast<uint32_t>(frame),
                     osWaitForever) != osOK)
@@ -114,19 +124,6 @@ void startIOEventTask(void const*)
             {
                 kiss::handle_frame(frame->type(), frame);
             }
-            break;
-        case IoFrame::DIGI_DATA:
-//      DEBUG("Digi frame");
-            if (osMessagePut(hdlcOutputQueueHandle,
-                reinterpret_cast<uint32_t>(frame),
-                osWaitForever) != osOK)
-            {
-                hdlc::release(frame);
-            }
-            break;
-        case IoFrame::FRAME_RETURN:
-            hdlc::release(frame);
-            break;
         }
     }
 }

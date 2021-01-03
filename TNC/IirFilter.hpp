@@ -1,8 +1,7 @@
-// Copyright 2015 Rob Riggs <rob@mobilinkd.com>
+// Copyright 2015-2020 Rob Riggs <rob@mobilinkd.com>
 // All rights reserved.
 
-#ifndef MOBILINKD__TNC__IIR_FILTER_H_
-#define MOBILINKD__TNC__IIR_FILTER_H_
+#pragma once
 
 #include <array>
 #include <cstring>
@@ -49,7 +48,5 @@ struct IirFilter {
 };
 
 }} // mobilinkd::tnc
-
-#endif // MOBILINKD__TNC__IIR_FILTER_H_
 
 

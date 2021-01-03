@@ -31,7 +31,8 @@ const q15_t lpf_coeffs[] = {
    14,    18,    20,    19,    17,    14,    11,     8,     5,     3,     1,     0,
 };
 
-typedef FirFilter<audio::ADC_BUFFER_SIZE, 9> emphasis_filter_type;
+static constexpr uint32_t ADC_BUFFER_SIZE = 88;
+typedef FirFilter<ADC_BUFFER_SIZE, 9> emphasis_filter_type;
 
 struct Demodulator {
 
@@ -47,11 +48,11 @@ struct Demodulator {
     emphasis_filter_type& audio_filter_;
     libafsk::FixedDelayLine<40> delay_line_;
     DPLL pll_;
-    Q15FirFilter<audio::ADC_BUFFER_SIZE, LPF_FILTER_LEN> lpf_filter_;
+    Q15FirFilter<ADC_BUFFER_SIZE, LPF_FILTER_LEN> lpf_filter_;
     libafsk::NRZI nrzi_;
     hdlc::NewDecoder hdlc_decoder_;
     bool locked_;
-    q15_t buffer_[audio::ADC_BUFFER_SIZE];
+    q15_t buffer_[ADC_BUFFER_SIZE];
 
     Demodulator(size_t sample_rate, emphasis_filter_type& c)
     : sample_rate_(sample_rate)

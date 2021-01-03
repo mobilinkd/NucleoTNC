@@ -1,8 +1,7 @@
-// Copyright 2015 Rob Riggs <rob@mobilinkd.com>
+// Copyright 2015-2020 Rob Riggs <rob@mobilinkd.com>
 // All rights reserved.
 
-#ifndef MOBILINKD__TNC__FILTER_COEFFICIENTS_HPP_
-#define MOBILINKD__TNC__FILTER_COEFFICIENTS_HPP_
+#pragma once
 
 #include "IirFilter.hpp"
 #include "FirFilter.hpp"
@@ -297,31 +296,9 @@ const TFirCoefficients<9> dB_6 = {
     }
 };
 
-const TFirCoefficients<9>* AfskFilters[] = {
-  &dB_6,
-  &dB_5,
-  &dB_4,
-  &dB_3,
-  &dB_2,
-  &dB_1,
-  &dB0,
-  &dB1,
-  &dB2,
-  &dB3,
-  &dB4,
-  &dB5,
-  &dB6,
-  &dB7,
-  &dB8,
-  &dB9,
-  &dB10,
-  &dB11,
-  &dB12
-};
+extern const TFirCoefficients<9>* AfskFilters[19];
 
 } // fir
 
 
 }}} // mobilinkd::tnc::filter
-
-#endif // MOBILINKD__TNC__FILTER_COEFFICIENTS_HPP_

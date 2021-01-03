@@ -1,11 +1,11 @@
-// Copyright 2015 Robert C. Riggs <rob@pangalactic.org>
+// Copyright 2015-2019 Mobilinkd LLC <rob@mobilinkd.com>
 // All rights reserved.
 
 #ifndef INC_PTT_HPP_
 #define INC_PTT_HPP_
 
 #include "GPIO.hpp"
-#include "Led.h"
+#include "LEDIndicator.h"
 
 namespace mobilinkd { namespace tnc {
 
@@ -17,11 +17,11 @@ struct PTT {
 
 struct SimplexPTT : PTT {
     void on() {
-        led_tx_on();                // LED
+        tx_on();                    // LED
         gpio::PTT_SIMPLEX::on();    // PTT
     }
     void off() {
-        led_tx_off();               // LED
+        tx_off();                   // LED
         gpio::PTT_SIMPLEX::off();   // PTT
     }
 };
@@ -29,11 +29,11 @@ struct SimplexPTT : PTT {
 
 struct MultiplexPTT : PTT {
     void on() {
-        led_tx_on();                // LED
+        tx_on();                    // LED
         gpio::PTT_MULTIPLEX::on();  // PTT
     }
     void off() {
-        led_tx_off();               // LED
+        tx_off();                   // LED
         gpio::PTT_MULTIPLEX::off(); // PTT
     }
 };

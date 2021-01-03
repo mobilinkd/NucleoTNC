@@ -1,8 +1,9 @@
-// Copyright 2015 Rob Riggs <rob@mobilinkd.com>
+// Copyright 2015-2020 Rob Riggs <rob@mobilinkd.com>
 // All rights reserved.
 
-#ifndef MOBILINKD__TNC__AUDIO__INPUT_HPP_
-#define MOBILINKD__TNC__AUDIO__INPUT_HPP_
+#pragma once
+
+#include "memory.hpp"
 
 #include "main.h"
 #include "stm32l4xx_hal.h"
@@ -83,45 +84,21 @@ enum AdcState {
     STREAM_INSTANT_TWIST_LEVEL
 };
 
-const size_t ADC_BUFFER_SIZE = 88;
-const size_t DMA_TRANSFER_SIZE = ADC_BUFFER_SIZE / 2;
+const size_t ADC_BUFFER_SIZE = 384;
 extern uint32_t adc_buffer[];       // Two int16_t samples per element.
+extern volatile uint32_t adc_block_size;
+extern volatile uint32_t dma_transfer_size;
+extern volatile uint32_t half_buffer_size;
 
-inline void stopADC() {
-    if (HAL_ADC_Stop_DMA(&hadc1) != HAL_OK)
-        CxxErrorHandler();
-    if (HAL_TIM_Base_Stop(&htim6) != HAL_OK)
-        CxxErrorHandler();
-}
+// 3kB
+typedef memory::Pool<8, ADC_BUFFER_SIZE * 2> adc_pool_type;
+extern adc_pool_type adcPool;
 
-inline void startADC(uint32_t channel) {
-    ADC_ChannelConfTypeDef sConfig;
-
-    sConfig.Channel = channel;
-    sConfig.Rank = ADC_REGULAR_RANK_1;
-    sConfig.SingleDiff = ADC_SINGLE_ENDED;
-    sConfig.SamplingTime = ADC_SAMPLETIME_12CYCLES_5;
-    sConfig.OffsetNumber = ADC_OFFSET_NONE;
-    sConfig.Offset = 0;
-    if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-        CxxErrorHandler();
-
-    if (HAL_TIM_Base_Start(&htim6) != HAL_OK)
-        CxxErrorHandler();
-    if (HAL_ADC_Start_DMA(&hadc1, adc_buffer, ADC_BUFFER_SIZE * 2) != HAL_OK)
-        CxxErrorHandler();
-}
-
-inline void restartADC() {
-    if (HAL_TIM_Base_Start(&htim6) != HAL_OK)
-        CxxErrorHandler();
-    if (HAL_ADC_Start_DMA(&hadc1, adc_buffer, ADC_BUFFER_SIZE * 2) != HAL_OK)
-        CxxErrorHandler();
-}
+void set_adc_block_size(uint32_t block_size);
 
 /// Vpp, Vavg, Vmin, Vmax
 typedef std::tuple<uint16_t, uint16_t, uint16_t, uint16_t> levels_type;
-levels_type readLevels(uint32_t channel, uint32_t samples = 2640);
+levels_type readLevels(uint32_t channel);
 float readTwist();
 
 void demodulatorTask();
@@ -138,5 +115,3 @@ void streamInstantInputTwist();
 }}} // mobilinkd::tnc::audio
 
 #endif // __cplusplus
-
-#endif // MOBILINKD__TNC__AUDIO__INPUT_HPP_

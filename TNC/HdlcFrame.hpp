@@ -39,9 +39,7 @@ public:
         DATA = 0, TX_DELAY, P_PERSIST, SLOT_TIME, TX_TAIL, DUPLEX, HARDWARE,
         TEXT, LOG};
 
-    enum Source {
-      RF_DATA = 0x00, SERIAL_DATA = 0x10, DIGI_DATA = 0x20,
-      FRAME_RETURN = 0xF0};
+    enum Source { RF_DATA = 0x80 };
 
 private:
     data_type data_;
@@ -161,6 +159,8 @@ public:
     }
 
     uint16_t size() const {return free_list_.size();}
+
+    static constexpr uint16_t capacity() { return SIZE; }
 
     frame_type* acquire() {
         frame_type* result = nullptr;

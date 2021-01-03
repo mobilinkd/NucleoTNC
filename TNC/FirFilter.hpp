@@ -1,8 +1,7 @@
-// Copyright 2015-2019 Rob Riggs <rob@mobilinkd.com>
+// Copyright 2015-2020 Rob Riggs <rob@mobilinkd.com>
 // All rights reserved.
 
-#ifndef MOBILINKD__TNC__FIR_FILTER_H_
-#define MOBILINKD__TNC__FIR_FILTER_H_
+#pragma once
 
 #include <AudioLevel.hpp>
 
@@ -94,13 +93,12 @@ struct FirFilter {
 
 template <size_t BLOCK_SIZE, size_t FILTER_SIZE>
 struct Q15FirFilter {
-    const q15_t* filter_taps{nullptr};
+    const q15_t* filter_taps = nullptr;
     q15_t filter_state[BLOCK_SIZE + FILTER_SIZE - 1];
-    q15_t filter_input[BLOCK_SIZE];
     q15_t filter_output[BLOCK_SIZE];
-    q15_t vgnd_{0};
-    q15_t i_vgnd_{0};
-    arm_fir_instance_q15 instance{};
+    q15_t vgnd_ = 0;
+    q15_t i_vgnd_ = 0;
+    arm_fir_instance_q15 instance;
 
     Q15FirFilter()
     {}
@@ -115,25 +113,16 @@ struct Q15FirFilter {
     {
         vgnd_ = audio::virtual_ground;
         filter_taps = taps;
-        arm_fir_init_q15(&instance, FILTER_SIZE, const_cast<q15_t*>(filter_taps), // WTF ARM?!?
+        arm_fir_init_q15(&instance, FILTER_SIZE,
+            const_cast<q15_t*>(filter_taps),
             filter_state, BLOCK_SIZE);
     }
 
-    // ADC input
-    q15_t* operator()(q15_t* input) // __attribute__((section(".bss2")))
+    q15_t* filter(const q15_t* input)
     {
-        arm_fir_fast_q15(&instance, input, filter_output, BLOCK_SIZE);
-        return filter_output;
-    }
-
-    // LPF input
-    q15_t* filter(q15_t* input) // __attribute__((section(".bss2")))
-    {
-        arm_fir_fast_q15(&instance, input, filter_output, BLOCK_SIZE);
+        arm_fir_fast_q15(&instance, const_cast<q15_t*>(input), filter_output, BLOCK_SIZE);
         return filter_output;
     }
 };
 
 }} // mobilinkd::tnc
-
-#endif // MOBILINKD__TNC__FIR_FILTER_H_

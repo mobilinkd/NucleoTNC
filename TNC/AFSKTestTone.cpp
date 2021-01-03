@@ -3,6 +3,12 @@
 
 #include "AFSKTestTone.hpp"
 #include "ModulatorTask.hpp"
+#include "Modulator.hpp"
+#include "KissHardware.hpp"
+
+#include "stm32l4xx_hal.h"
+
+extern RNG_HandleTypeDef hrng;
 
 void startAfskToneTask(void const* arg)
 {
@@ -79,19 +85,52 @@ void AFSKTestTone::stop()
 void AFSKTestTone::fill() const
 {
     static State current = State::SPACE;
+    static uint32_t random = 0;
+    static uint8_t counter = 0;
 
     switch (state_) {
     case AFSKTestTone::State::NONE:
         return;
     case AFSKTestTone::State::MARK:
-        getModulator().send(true);
+        if (kiss::settings().modem_type == kiss::Hardware::ModemType::M17)
+        {
+            getModulator().send(0x77);
+        }
+        else
+        {
+            getModulator().send(true);
+        }
         break;
     case AFSKTestTone::State::SPACE:
-        getModulator().send(false);
+        if (kiss::settings().modem_type == kiss::Hardware::ModemType::M17)
+        {
+            getModulator().send(0x5F);
+        }
+        else
+        {
+            getModulator().send(false);
+        }
         break;
     case AFSKTestTone::State::BOTH:
-        getModulator().send(current == State::SPACE);
-        current = (current == State::MARK ? State::SPACE : State::MARK);
+        if (kiss::settings().modem_type == kiss::Hardware::ModemType::M17)
+        {
+            if ((counter & 3) == 0)
+            {
+                auto status = HAL_RNG_GenerateRandomNumber(&hrng, &random);
+                if (status != HAL_OK)
+                {
+                    WARN("RNG failure code %d", status);
+                }
+            }
+            getModulator().send(random & 0xFF);
+            random >>= 8;
+            counter += 1;
+        }
+        else
+        {
+            getModulator().send(current == State::SPACE);
+            current = (current == State::MARK ? State::SPACE : State::MARK);
+        }
         break;
     default:
         break;

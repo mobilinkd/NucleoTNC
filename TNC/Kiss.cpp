@@ -4,6 +4,7 @@
 #include <Log.h>
 #include "Kiss.hpp"
 #include "KissHardware.hpp"
+#include "ModulatorTask.hpp"
 
 // extern osMessageQId hdlcOutputQueueHandle;
 
@@ -26,16 +27,19 @@ void handle_frame(uint8_t frame_type, hdlc::IoFrame* frame) {
         DEBUG("FRAME_TX_DELAY");
         kiss::settings().txdelay = value;
         hdlc::release(frame);
+        updateModulator();
         break;
     case kiss::FRAME_P_PERSIST:
         DEBUG("FRAME_P_PERSIST");
         kiss::settings().ppersist = value;
         hdlc::release(frame);
+        updateModulator();
         break;
     case kiss::FRAME_SLOT_TIME:
         DEBUG("FRAME_SLOT_TIME");
         kiss::settings().slot = value;
         hdlc::release(frame);
+        updateModulator();
         break;
     case kiss::FRAME_TX_TAIL:
         DEBUG("FRAME_TX_TAIL");
@@ -46,6 +50,7 @@ void handle_frame(uint8_t frame_type, hdlc::IoFrame* frame) {
         DEBUG("FRAME_DUPLEX");
         kiss::settings().duplex = value;
         hdlc::release(frame);
+        updateModulator();
         break;
     case kiss::FRAME_HARDWARE:
         DEBUG("FRAME_HARDWARE");

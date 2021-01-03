@@ -1,5 +1,7 @@
-#ifndef MOBILINKD__DIGITAL_PLL_H_
-#define MOBILINKD__DIGITAL_PLL_H_
+// Copyright 2015-2021 Mobilinkd LLC <rob@mobilinkd.com>
+// All rights reserved.
+
+#pragma once
 
 #include "Hysteresis.hpp"
 #include "IirFilter.hpp"
@@ -29,10 +31,10 @@ struct PLLResult {
 // scipy.signal:
 //      b, a = bessel(4, [80.0/(1200/2)], 'lowpass')
 //
-const std::array<float, 5> lock_b = {
+constexpr std::array<float, 5> lock_b = {
     1.077063e-03,4.308253e-03,6.462379e-03,4.308253e-03,1.077063e-03,
 };
-const std::array<float, 5> lock_a = {
+constexpr std::array<float, 5> lock_a = {
     1.000000e+00,-2.774567e+00,2.962960e+00,-1.437990e+00,2.668296e-01,
 };
 
@@ -41,7 +43,7 @@ const std::array<float, 5> lock_a = {
 //      loop_coeffs = firwin(9, [64.0/(1200/2)], width = None,
 //          pass_zero = True, scale = True, window='hann')
 //
-const std::array<float, 7> loop_coeffs = {
+constexpr std::array<float, 7> loop_coeffs = {
 //     0.08160962754214955, 0.25029850550446403, 0.3361837339067726, 0.2502985055044641, 0.08160962754214969
     3.196252e-02,1.204223e-01,2.176819e-01,2.598666e-01,2.176819e-01,1.204223e-01,3.196252e-02
 };
@@ -59,7 +61,7 @@ struct BaseDigitalPLL
 	float_type sps_; 			///< Samples per symbol
 	float_type limit_;			///< Samples per symbol / 2
 	libafsk::BaseHysteresis<float_type> lock_;
-    FirFilter<1, 7> loop_filter_{pll::loop_coeffs.begin()};
+    FirFilter<1, pll::loop_coeffs.size()> loop_filter_{pll::loop_coeffs.data()};
     IirFilter<5> lock_filter_{pll::lock_b, pll::lock_a};
 
 	bool last_;
@@ -127,6 +129,3 @@ typedef BaseDigitalPLL<double> DigitalPLL;
 typedef BaseDigitalPLL<float> FastDigitalPLL;
 
 }} // mobilinkd::tnc
-
-#endif // MOBILINKD__DIGITAL_PLL_H_
-
