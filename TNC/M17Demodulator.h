@@ -149,7 +149,7 @@ struct M17Demodulator : IDemodulator
         case DemodState::FRAME_SYNC:
             if (!locked)
             {
-                DEBUG("state: %d, dt: %5d, evm: %5d, evma: %5d, dev: %5d, freq: %5d, locked: %d, ber: %d",
+                INFO("state: %d, dt: %5d, evm: %5d, evma: %5d, dev: %5d, freq: %5d, locked: %d, ber: %d",
                     int(demodState), int(dt * 10000), int(evm * 1000),
                     int(evma * 1000), int((1.0 / estimated_deviation) * 1000),
                     int(estimated_frequency_offset * 1000),
@@ -206,7 +206,7 @@ struct M17Demodulator : IDemodulator
         }
         if ((count++ % 192) == 0)
         {
-            DEBUG("state: %d, dt: %5d, evm: %5d, evma: %5d, dev: %5d, freq: %5d, locked: %d, ber: %d",
+            INFO("state: %d, dt: %5d, evm: %5d, evma: %5d, dev: %5d, freq: %5d, locked: %d, ber: %d",
                 int(demodState), int(dt * 10000), int(evm * 1000),
                 int(evma * 1000), int((1.0 / estimated_deviation) * 1000),
                 int(estimated_frequency_offset * 1000),
@@ -256,7 +256,78 @@ struct M17Demodulator : IDemodulator
 
     uint32_t readBatteryLevel() override
     {
+#ifndef NUCLEOTNC
+        DEBUG("enter M17Demodulator::readBatteryLevel");
+
+        ADC_ChannelConfTypeDef sConfig;
+
+        sConfig.Channel = ADC_CHANNEL_VREFINT;
+        sConfig.Rank = ADC_REGULAR_RANK_1;
+        sConfig.SingleDiff = ADC_SINGLE_ENDED;
+        sConfig.SamplingTime = ADC_SAMPLETIME_247CYCLES_5;
+        sConfig.OffsetNumber = ADC_OFFSET_NONE;
+        sConfig.Offset = 0;
+        if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+            CxxErrorHandler();
+
+        htim6.Init.Period = 48000;
+        if (HAL_TIM_Base_Init(&htim6) != HAL_OK) CxxErrorHandler();
+
+        if (HAL_TIM_Base_Start(&htim6) != HAL_OK)
+            CxxErrorHandler();
+
+        if (HAL_ADC_Start(&hadc1) != HAL_OK) CxxErrorHandler();
+        if (HAL_ADC_PollForConversion(&hadc1, 3) != HAL_OK) CxxErrorHandler();
+        auto vrefint = HAL_ADC_GetValue(&hadc1);
+        if (HAL_ADC_Stop(&hadc1) != HAL_OK) CxxErrorHandler();
+
+        // Disable battery charging while measuring battery voltage.
+        auto usb_ce = gpio::USB_CE::get();
+        gpio::USB_CE::on();
+
+        gpio::BAT_DIVIDER::off();
+        HAL_Delay(1);
+
+        sConfig.Channel = ADC_CHANNEL_15;
+        if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+            CxxErrorHandler();
+
+        uint32_t vbat = 0;
+        if (HAL_ADC_Start(&hadc1) != HAL_OK) CxxErrorHandler();
+        for (size_t i = 0; i != 8; ++i)
+        {
+            if (HAL_ADC_PollForConversion(&hadc1, 1) != HAL_OK) CxxErrorHandler();
+            vbat += HAL_ADC_GetValue(&hadc1);
+        }
+
+        vbat /= 8;
+
+        if (HAL_ADC_Stop(&hadc1) != HAL_OK) CxxErrorHandler();
+        if (HAL_TIM_Base_Stop(&htim6) != HAL_OK)
+            CxxErrorHandler();
+
+        gpio::BAT_DIVIDER::on();
+
+        // Restore battery charging state.
+        if (!usb_ce) gpio::USB_CE::off();
+
+        INFO("Vref = %lu", vrefint);
+        INFO("Vbat = %lu (raw)", vbat);
+
+        // Order of operations is important to avoid underflow.
+        vbat *= 6600;
+        vbat /= (VREF + 1);
+
+        uint32_t vref = ((vrefint * 3300) + (VREF / 2)) / VREF;
+
+        INFO("Vref = %lumV", vref)
+        INFO("Vbat = %lumV", vbat);
+
+        DEBUG("exit M17Demodulator::readBatteryLevel");
+        return vbat;
+#else
         return 0;
+#endif
     }
 };
 

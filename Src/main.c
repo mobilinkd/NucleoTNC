@@ -90,7 +90,7 @@ osThreadId ioEventTaskHandle;
 uint32_t ioEventTaskBuffer[ 384 ];
 osStaticThreadDef_t ioEventTaskControlBlock;
 osThreadId audioInputTaskHandle;
-uint32_t audioInputTaskBuffer[ 768 ];
+uint32_t audioInputTaskBuffer[ 640 ];
 osStaticThreadDef_t audioInputTaskControlBlock;
 osThreadId modulatorTaskHandle;
 uint32_t modulatorTaskBuffer[ 384 ];
@@ -105,7 +105,7 @@ osMessageQId serialOutputQueueHandle;
 uint8_t serialOutputQueueBuffer[ 16 * sizeof( uint32_t ) ];
 osStaticMessageQDef_t serialOutputQueueControlBlock;
 osMessageQId audioInputQueueHandle;
-uint8_t audioInputQueueBuffer[ 8 * sizeof( uint8_t ) ];
+uint8_t audioInputQueueBuffer[ 8 * sizeof( uint32_t ) ];
 osStaticMessageQDef_t audioInputQueueControlBlock;
 osMessageQId hdlcInputQueueHandle;
 uint8_t hdlcInputQueueBuffer[ 3 * sizeof( uint32_t ) ];
@@ -148,6 +148,7 @@ void startDefaultTask(void const * argument);
 extern void startIOEventTask(void const * argument);
 extern void startAudioInputTask(void const * argument);
 extern void startModulatorTask(void const * argument);
+void encode_serial_number(void);
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
                                 
@@ -249,6 +250,8 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wwrite-strings"    // cmsis-os is not const-correct.
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -265,7 +268,7 @@ int main(void)
   ioEventTaskHandle = osThreadCreate(osThread(ioEventTask), NULL);
 
   /* definition and creation of audioInputTask */
-  osThreadStaticDef(audioInputTask, startAudioInputTask, osPriorityAboveNormal, 0, 768, audioInputTaskBuffer, &audioInputTaskControlBlock);
+  osThreadStaticDef(audioInputTask, startAudioInputTask, osPriorityAboveNormal, 0, 640, audioInputTaskBuffer, &audioInputTaskControlBlock);
   audioInputTaskHandle = osThreadCreate(osThread(audioInputTask), NULL);
 
   /* definition and creation of modulatorTask */
@@ -290,7 +293,7 @@ int main(void)
   serialOutputQueueHandle = osMessageCreate(osMessageQ(serialOutputQueue), NULL);
 
   /* definition and creation of audioInputQueue */
-  osMessageQStaticDef(audioInputQueue, 8, uint8_t, audioInputQueueBuffer, &audioInputQueueControlBlock);
+  osMessageQStaticDef(audioInputQueue, 8, uint32_t, audioInputQueueBuffer, &audioInputQueueControlBlock);
   audioInputQueueHandle = osMessageCreate(osMessageQ(audioInputQueue), NULL);
 
   /* definition and creation of hdlcInputQueue */
@@ -311,6 +314,8 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+#pragma GCC diagnostic pop
+
   if (HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R, 1024) != HAL_OK) Error_Handler();
   if (HAL_DAC_Start(&hdac1, DAC_CHANNEL_2) != HAL_OK) Error_Handler();
   if (HAL_OPAMP_SelfCalibrate(&hopamp1) != HAL_OK) Error_Handler();
@@ -325,7 +330,7 @@ int main(void)
     Error_Handler();
   }
 
-#if 0
+#if 1
   // Do not erase SRAM2 during reset.
   if ((obInit.USERConfig & FLASH_OPTR_SRAM2_RST) == RESET) {
     obInit.OptionType = OPTIONBYTE_USER;
@@ -518,7 +523,7 @@ static void MX_ADC1_Init(void)
     */
   sConfig.Channel = ADC_CHANNEL_8;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_6CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_12CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
@@ -591,7 +596,7 @@ static void MX_I2C3_Init(void)
 {
 
   hi2c3.Instance = I2C3;
-  hi2c3.Init.Timing = 0x00300F33;
+  hi2c3.Init.Timing = 0x00702991;
   hi2c3.Init.OwnAddress1 = 0;
   hi2c3.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c3.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -632,7 +637,7 @@ static void MX_OPAMP1_Init(void)
   hopamp1.Init.PowerSupplyRange = OPAMP_POWERSUPPLY_HIGH;
   hopamp1.Init.Mode = OPAMP_PGA_MODE;
   hopamp1.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO0;
-  hopamp1.Init.InvertingInput = OPAMP_INVERTINGINPUT_IO0;
+  hopamp1.Init.InvertingInput = OPAMP_INVERTINGINPUT_CONNECT_NO; // Manually changed.
   hopamp1.Init.PgaGain = OPAMP_PGA_GAIN_2;
   hopamp1.Init.PowerMode = OPAMP_POWERMODE_NORMAL;
   hopamp1.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
@@ -997,7 +1002,7 @@ void startDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    osDelay(osWaitForever);
   }
   /* USER CODE END 5 */ 
 }
@@ -1036,9 +1041,10 @@ void _Error_Handler(char *file, int line)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-  while(1)
-  {
-  }
+  snprintf(error_message, sizeof(error_message), "Error: %s:%d\r\n", file, line);
+  error_message[sizeof(error_message) - 1] = 0;
+
+  NVIC_SystemReset();
   /* USER CODE END Error_Handler_Debug */
 }
 

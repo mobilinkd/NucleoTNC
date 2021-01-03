@@ -12,6 +12,9 @@ extern "C" {
 void startIOEventTask(void const* argument);
 
 extern osMessageQId ioEventQueueHandle;
+#ifndef NUCLEOTNC
+extern volatile int cdc_connected;
+#endif
 
 #ifdef __cplusplus
 }

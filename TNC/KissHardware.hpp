@@ -195,7 +195,11 @@ constexpr uint8_t MODEM_TYPE_M17 = 5;
 #define KISS_OPTION_RX_REV_POLARITY 0x40  // Reverse Polarity on RX when set.
 #define KISS_OPTION_TX_REV_POLARITY 0x80  // Reverse Polarity on TX when set.
 
+#ifndef NUCLEOTNC
+const char TOCALL[] = "APML30"; // Update for every feature change.
+#else
 const char TOCALL[] = "APML00"; // Update for every feature change.
+#endif
 
 } // hardware
 
@@ -203,11 +207,11 @@ const size_t CALLSIGN_LEN = 8;
 using call_t = std::array<char, CALLSIGN_LEN>;
 
 struct Alias {
-    call_t call;                    ///< Callsign.  Pad unused with NUL.
-    bool set;                       ///< Alias is configured.
-    bool use;                       ///< Use this alias.
-    bool insert_id;                 ///< Tracing.
-    bool preempt;                   ///< Allow out of order pathing.
+    call_t call;                ///< Callsign.  Pad unused with NUL.
+    bool set;                   ///< Alias is configured.
+    bool use;                   ///< Use this alias.
+    bool insert_id;             ///< Tracing.
+    bool preempt;               ///< Allow out of order pathing.
     uint8_t hops;
 }; // size = 10
 
@@ -254,19 +258,19 @@ struct Hardware
         hardware::MODEM_TYPE_M17
     };
 
-    uint8_t txdelay;       ///< How long in 10mS units to wait for TX to settle before starting data
-    uint8_t ppersist;      ///< Likelihood of taking the channel when its not busy
-    uint8_t slot;          ///< How long in 10mS units to wait between sampling the channel to see if free
+    uint8_t txdelay;        ///< How long in 10mS units to wait for TX to settle before starting data
+    uint8_t ppersist;       ///< Likelihood of taking the channel when its not busy
+    uint8_t slot;           ///< How long in 10mS units to wait between sampling the channel to see if free
     uint8_t txtail;         ///< How long in 10mS units to wait after the data before keying off the transmitter
     uint8_t duplex;         ///< Ignore current channel activity - just key up
-    uint8_t modem_type;         ///< Modem type.
-    uint16_t output_gain; ///< output volume (0-256).
-    uint16_t input_gain;  ///< input volume (0-256).
-    int8_t tx_twist;           ///< 0 to 100 (50 = even).
-    int8_t rx_twist;            ///< 0, 3, 6 dB
-    uint8_t log_level;          ///< Log level (0 - 4 : debug - severe).
+    uint8_t modem_type;     ///< Modem type.
+    uint16_t output_gain;   ///< output volume (0-256).
+    uint16_t input_gain;    ///< input volume (0-256).
+    int8_t tx_twist;        ///< 0 to 100 (50 = even).
+    int8_t rx_twist;        ///< 0, 3, 6 dB
+    uint8_t log_level;      ///< Log level (0 - 4 : debug - severe).
 
-    uint16_t options;           ///< boolean options
+    uint16_t options;       ///< boolean options
 
     /// Callsign.   Pad unused with NUL.
     call_t mycall;
@@ -426,6 +430,5 @@ void reply8(uint8_t cmd, uint8_t result) __attribute__((noinline));
 void reply16(uint8_t cmd, uint16_t result) __attribute__((noinline));
 
 void reply(uint8_t cmd, const uint8_t* data, uint16_t len) __attribute__((noinline));
-
 
 }}} // mobilinkd::tnc::kiss

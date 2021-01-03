@@ -3,6 +3,7 @@
 
 #ifndef NUCLEOTNC
 #include "Log.h"
+#include "bm78.h"
 #endif
 #include "SerialPort.hpp"
 #include "PortInterface.h"
@@ -128,10 +129,6 @@ void startSerialTask(void const* arg)
     HAL_UART_Receive_DMA(&huart_serial, rxBuffer, RX_BUFFER_SIZE * 2);
     __HAL_UART_ENABLE_IT(&huart_serial, UART_IT_IDLE);
 
-    uint32_t last_sent_time = osKernelSysTick();
-    uint32_t current_sent_time = 0;
-    bool paused = false;
-
     while (true) {
         osEvent evt = osMessageGet(serialPort->queue(), osWaitForever);
 
@@ -180,14 +177,12 @@ void startSerialTask(void const* arg)
                         reinterpret_cast<uint32_t>(frame),
                         osWaitForever) != osOK)
                     {
-                        WARN("Failed to send serial frame");
                         hdlc::release(frame);
                     }
 
                     if (hdlc::ioFramePool().size() < (hdlc::ioFramePool().capacity() / 4))
                     {
                         UART_DMAPauseReceive(&huart_serial);
-                        WARN("Pausing UART RX");
                         while (hdlc::ioFramePool().size() < (hdlc::ioFramePool().capacity() / 2))
                         {
                             osThreadYield();

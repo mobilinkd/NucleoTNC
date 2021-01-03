@@ -9,6 +9,9 @@
 #include "ModulatorTask.hpp"
 #include "Modulator.hpp"
 #include "HDLCEncoder.hpp"
+#ifndef NUCLEOTNC
+#include "KissHardware.h"
+#endif
 
 #include <memory>
 #include <array>
@@ -630,18 +633,19 @@ bool Hardware::load()
 {
     INFO("Loading settings from EEPROM");
 
-    Hardware tmp;
+    auto tmp = std::make_unique<Hardware>();
 
-    memset(&tmp, 0, sizeof(Hardware));
+    if (!tmp) return false;
+    memset(tmp.get(), 0, sizeof(Hardware));
 
-    if (!I2C_Storage::load(tmp)) {
+    if (!I2C_Storage::load(*tmp)) {
         ERROR("EEPROM read failed");
         return false;
     }
 
-    if (tmp.crc_ok())
+    if (tmp->crc_ok())
     {
-        memcpy(this, &tmp, sizeof(Hardware));
+        memcpy(this, tmp.get(), sizeof(Hardware));
         return true;
     }
     ERROR("EEPROM CRC error");
@@ -657,7 +661,7 @@ bool Hardware::store() const
         return false;
     }
 
-    INFO("EEPROM saved checksum is: %04x (crc = %04x)", checksum, crc());
+    INFO("EEPROM saved checksum is: %04hx (crc = %04hx)", checksum, crc());
 
     return crc_ok();
 }

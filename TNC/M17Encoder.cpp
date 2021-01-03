@@ -113,7 +113,7 @@ void M17Encoder::run()
             }
 
             evt = osMessagePeek(input_queue, 0);
-            back2back = evt.status == osEventMessage;
+            back2back = (evt.status == osEventMessage);
             if (!back2back)
             {
                 osMessagePut(audioInputQueueHandle, tnc::audio::DEMODULATOR,
