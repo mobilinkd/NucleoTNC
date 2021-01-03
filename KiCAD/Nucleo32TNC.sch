@@ -1,12 +1,12 @@
-EESchema Schematic File Version 5
-EELAYER 29 0
+EESchema Schematic File Version 4
+EELAYER 30 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
 Title "Nucleo32 TNC"
-Date "2019-06-13"
-Rev "A"
+Date "2021-01-03"
+Rev "B"
 Comp "Mobilinkd TNC"
 Comment1 "Breadboard TNC Project"
 Comment2 "STM32L432 Nucleo32 Board"
@@ -404,7 +404,7 @@ L Device:C C1
 U 1 1 5D0E12F1
 P 1350 3250
 F 0 "C1" V 1098 3250 50  0000 C CNN
-F 1 "0.22uF" V 1189 3250 50  0000 C CNN
+F 1 "1uF" V 1189 3250 50  0000 C CNN
 F 2 "" H 1388 3100 50  0001 C CNN
 F 3 "~" H 1350 3250 50  0001 C CNN
 	1    1350 3250
