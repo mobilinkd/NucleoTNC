@@ -4,7 +4,7 @@ Source code for STM32L432KC Nucleo32-based TNC (PCB & breadboard version).
 
 http://www.mobilinkd.com/2019/06/24/nucleotnc/
 
-# Building
+# Building the Firmware
 
 Use Eclipse with CDT and the GNU MCU Eclipse plugins.
 
@@ -21,27 +21,23 @@ Below are example compilation and linking lines for reference:
 All of the macros defined on the compiler line are important in order
 to properly build the firmware.
 
-# Debugging
-
-Logging is enabled in debug builds and is output via ITM (SWO).  The
-firmware is distributed with an openocd stlink config file that enables
-ITM output to a named pipe -- `swv`.  You must create this pipe in the
-top level directory.
-
-To read from this pipe, open a terminal and run:
-
-`while true; do tr -d '\01' < swv; done`
-
-If you change the MCU's core clock, you need to adjust the timing in the
-`stlink-tnc3.cfg` config file.
-
-The TNC3 runs at 48MHz on startup.  It may switch to 80MHz for modulation
-types (9600, M17) which require more speed.  This makes using SWO challenging
-as it cannot handle changes in core speeds.
-
 # Installing firmware
 
-Firmware can be installed via the on-board ST/LINK port or via USB DFU.
+Firmware can be installed via the storage interface (drag & drop), the
+on-board ST/LINK port, or via USB DFU.
+
+## Drag & Drop
+
+For the NucleoTNC, the easiest way to install firmware is to copy the
+firmware file to the TNC directly.  The NucleoTNC will show up as a storage
+device when plugged in.  Just copy the firmware.bin file into the shared
+folder.  The firmware will automatically install, the NucleoTNC will reset,
+and the new firmware will be running.
+
+## ST/Link
+
+The ST/Link port is a debug port exposed by the NucleoTNC.  It can be used
+by Eclipse and other IDEs to directly upload the firmware to the TNC.
 
 ## USB DFU
 
@@ -51,23 +47,11 @@ Firmware can be installed via the on-board ST/LINK port or via USB DFU.
 
  2. Download the ELF file from the release (or that you have built from source).
 
- 3. Plug the TNC into a USB port and turn the TNC on.  You should see a USB serial port enumerated.
-
- 4. Put the TNC into DFU mode by pressing the DFU button on the side.  The TNC
-will only enter DFU mode when plugged into a USB port.
-
- ![TNC3 Diagram](https://s3.amazonaws.com/mobilinkd/TNC3/TNC3_Diagram.png)
-
-***There is no visible indication on the TNC that it is in DFU mode***
-
- 5. You should see the serial port device go away and a new DFU device appear.
-
- 6. Run the STM32CubeProgrammer from the command-line. (Replace "firmware.elf" with the appropriate firmware filename.)
+ 3. Run the STM32CubeProgrammer from the command-line. (Replace "firmware.elf" with the appropriate firmware filename.)
 
     ./STM32_Programmer_CLI -c port=USB1 -d firmware.elf -v -g 0x8000000
 
- 7. When that is complete, the DFU device will disappear and the serial port
-device will re-appear.
+ 4. When that is complete, the NucleoTNC will restart with the new firmware.
 
 ----
 
