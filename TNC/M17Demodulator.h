@@ -114,7 +114,7 @@ struct M17Demodulator : IDemodulator
         auto [sample, phase, symbol, evm] = demod_result;
         auto [locked, evma] = dcd(evm);
         static size_t count = 0;
-        gain = locked ? 0.0005f : 0.01f;
+        gain = locked ? 0.0025f : 0.01f;
 
         switch (demodState)
         {
