@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "AudioInput.hpp"
 #include "Modulator.hpp"
 #include "HdlcFrame.hpp"
 #include "M17.h"
@@ -109,6 +110,8 @@ struct M17Modulator : Modulator
             state = State::STARTING;
             [[fallthrough]];
         case State::STARTING:
+            osMessagePut(audioInputQueueHandle, tnc::audio::IDLE,
+              osWaitForever);
             start_conversion();
             ptt_->on();
             while (delay_count < txdelay) osThreadYield();
@@ -165,6 +168,9 @@ struct M17Modulator : Modulator
 #if defined(KISS_LOGGING) && !defined(NUCLEOTNC)
                 HAL_RCCEx_EnableLSCO(RCC_LSCOSOURCE_LSE);
 #endif
+            osMessagePut(audioInputQueueHandle, tnc::audio::DEMODULATOR,
+              osWaitForever);
+
             break;
         }
     }
@@ -200,6 +206,8 @@ struct M17Modulator : Modulator
 #if defined(KISS_LOGGING) && !defined(NUCLEOTNC)
                 HAL_RCCEx_EnableLSCO(RCC_LSCOSOURCE_LSE);
 #endif
+            osMessagePut(audioInputQueueHandle, tnc::audio::DEMODULATOR,
+              osWaitForever);
             break;
         }
     }

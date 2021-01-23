@@ -77,10 +77,13 @@ void M17Encoder::run()
 
     osThreadResume(encoderTaskHandle);
 
+    auto start = osKernelSysTick();
+    uint32_t delay_ms = 0;
+
+    state = State::IDLE;
+
     while (state != State::INACTIVE)
     {
-        state = State::IDLE;
-
         osEvent evt = osMessageGet(input_queue, osWaitForever);
         if (evt.status == osEventMessage)
         {
@@ -90,21 +93,23 @@ void M17Encoder::run()
                 state = State::INACTIVE;
                 break;
             }
-            if (!back2back)
-            {
-                osMessagePut(audioInputQueueHandle, tnc::audio::IDLE,
-                  osWaitForever);
-            }
             auto frame = static_cast<IoFrame*>(evt.value.p);
             switch (frame->source())
             {
-            case 0: // Basic packet data
+            case 0x00: // Basic packet data
+                delay_ms = ((frame->size() / 25) + 1) * 40;
+                start = osKernelSysTick();
                 process_packet(frame, FrameType::BASIC_PACKET);
                 break;
-            case 1: // Encapsulated packet data
+            case 0x10: // Encapsulated packet data
+                delay_ms = (frame->size() / 25) * 40;
+                start = osKernelSysTick();
                 process_packet(frame, FrameType::FULL_PACKET);
                 break;
-            case 2: // Voice stream
+            case 0x20: // Voice stream
+                if (back2back) delay_ms += 40;
+                else delay_ms = 80 + tnc::kiss::settings().txdelay * 10;
+                start = osKernelSysTick();
                 process_stream(frame, FrameType::VOICE_STREAM);
                 break;
             default:
@@ -112,12 +117,24 @@ void M17Encoder::run()
                 // ignore it
             }
 
-            evt = osMessagePeek(input_queue, 0);
+            evt = osMessagePeek(input_queue, delay_ms);
+            auto msgs = osMessageWaiting(input_queue);
             back2back = (evt.status == osEventMessage);
             if (!back2back)
             {
-                osMessagePut(audioInputQueueHandle, tnc::audio::DEMODULATOR,
-                  osWaitForever);
+                if (state != State::IDLE)
+                {
+                    state = State::IDLE;
+                    WARN("Timed out waiting for packet (%lums).", delay_ms);
+                }
+                delay_ms = 0;
+            }
+            else
+            {
+                int duration = osKernelSysTick() - start;
+                if (duration >= delay_ms) delay_ms = 0;
+                else delay_ms -= duration;
+                INFO("Slack time = %lums", delay_ms);
             }
         }
     }
@@ -180,6 +197,9 @@ void M17Encoder::process_stream(tnc::hdlc::IoFrame* frame, FrameType type)
             release(frame);
             send_link_setup();
             state = State::ACTIVE;
+        } else {
+            WARN("Unexpected LSF frame size = %u", frame->size());
+            release(frame);
         }
         break;
     case State::ACTIVE:
@@ -189,6 +209,7 @@ void M17Encoder::process_stream(tnc::hdlc::IoFrame* frame, FrameType type)
         }
         else
         {
+            WARN("Unexpected AUDIO frame size = %u", frame->size());
             release(frame);             // Ignore it.
         }
         break;
@@ -311,7 +332,7 @@ void M17Encoder::send_packet_frame(const std::array<uint8_t, 26>& packet_frame)
 
 void M17Encoder::send_stream(tnc::hdlc::IoFrame* frame, FrameType)
 {
-    payload_t punctured;
+    payload_t punctured;        // Punctured audio payload (272 bits, 34 bytes).
     frame_t m17_frame;
 
     // Construct LICH.
@@ -328,12 +349,12 @@ void M17Encoder::send_stream(tnc::hdlc::IoFrame* frame, FrameType)
 
     auto encoded = conv_encode(data);
     puncture_bytes(encoded, punctured, P2);
-    std::copy(punctured.begin(), punctured.end(), fit);
+    std::copy(punctured.begin(), punctured.end(), fit); // Copy after LICH.
 
-    interleaver.interleave(m17_frame);
-    randomizer(m17_frame);
+    interleaver.interleave(m17_frame);  // Interleave entire frame.
+    randomizer(m17_frame);              // Randomize entire frame.
 
-    frame->clear();
+    frame->clear();                     // Re-use existing frame.
     for (auto c : m17::STREAM_SYNC) frame->push_back(c);
     for (auto c : m17_frame) frame->push_back(c);
 
@@ -381,7 +402,6 @@ void M17Encoder::create_link_setup(tnc::hdlc::IoFrame* frame, FrameType type)
     case FrameType::VOICE_STREAM:
         // The frame is the LSF.
         std::copy(frame->begin(), frame->end(), current_lsf.begin());
-        tnc::hdlc::release(frame);
         break;
     }
 }
@@ -492,10 +512,10 @@ void M17Encoder::encoderTask(void const*)
         osEvent evt = osMessageGet(m17EncoderInputQueueHandle, osWaitForever);
         if (evt.status != osEventMessage) continue;
         auto frame = static_cast<IoFrame*>(evt.value.p);
-        for (uint8_t c : *frame)
-        {
-            modulator.send(c);
-        }
+        if (frame->size() != 48) WARN("Bad frame size %u", frame->size());
+
+        for (uint8_t c : *frame) modulator.send(c); // This takes ~40ms.
+
         release(frame);
     }
 }
