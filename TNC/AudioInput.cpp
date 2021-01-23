@@ -77,7 +77,7 @@ extern "C" void startAudioInputTask(void const*) {
             // stop();
             break;
         case DEMODULATOR:
-            DEBUG("DEMODULATOR");
+            INFO("DEMODULATOR");
             demodulatorTask();
             break;
         case STREAM_AMPLIFIED_INPUT_LEVEL:
@@ -120,7 +120,7 @@ extern "C" void startAudioInputTask(void const*) {
             updateModulator();
             break;
         case IDLE:
-            DEBUG("IDLE");
+            INFO("IDLE");
             break;
         default:
             break;
