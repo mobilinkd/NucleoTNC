@@ -104,7 +104,7 @@ void AFSKTestTone::fill() const
     case AFSKTestTone::State::SPACE:
         if (kiss::settings().modem_type == kiss::Hardware::ModemType::M17)
         {
-            getModulator().send(0x5F);
+            getModulator().send(0x22);
         }
         else
         {

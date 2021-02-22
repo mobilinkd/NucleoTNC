@@ -99,7 +99,7 @@ void startIOEventTask(void const*)
         {
             DEBUG("RF frame");
             frame->source(frame->source() & 0x70);
-            if (!ioport->write(frame, 100))
+            if (!ioport->write(frame, frame->size() + 100))
             {
                 ERROR("Timed out sending frame");
                 // The frame has been passed to the write() call.  It owns it now.

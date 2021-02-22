@@ -6,6 +6,7 @@
 #include <array>
 #include <algorithm>
 #include <utility>
+#include <cstdint>
 
 namespace mobilinkd {
 

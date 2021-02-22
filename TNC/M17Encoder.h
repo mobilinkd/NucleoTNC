@@ -189,7 +189,8 @@ private:
     osThreadId encoderTaskHandle;
     State state = State::INACTIVE;
 
-    frame_t punctured;
+    frame_t m17_frame;
+    payload_t stream_payload;
     lsf_t current_lsf;
     LinkSetupFrame::encoded_call_t src;
     LinkSetupFrame::encoded_call_t dest;

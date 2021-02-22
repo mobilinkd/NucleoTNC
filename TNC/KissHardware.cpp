@@ -13,7 +13,6 @@
 #include "KissHardware.h"
 #endif
 
-#include <memory>
 #include <array>
 #include <cstdio>
 #include <cstring>
@@ -44,10 +43,10 @@ int powerOffViaUSB(void)
 namespace mobilinkd { namespace tnc { namespace kiss {
 
 #ifdef NUCLEOTNC
-const char FIRMWARE_VERSION[] = "2.1.5";
+const char FIRMWARE_VERSION[] = "2.1.8";
 const char HARDWARE_VERSION[] = "Mobilinkd NucleoTNC";
 #else
-const char FIRMWARE_VERSION[] = "2.1.5";
+const char FIRMWARE_VERSION[] = "2.1.8";
 const char HARDWARE_VERSION[] = "Mobilinkd TNC3 2.1.1";
 #endif
 
@@ -502,7 +501,7 @@ void Hardware::handle_request(hdlc::IoFrame* frame)
 
     case hardware::SET_DATETIME:
         DEBUG("SET_DATETIME");
-        set_rtc_datetime(&*it);
+        set_rtc_datetime(static_cast<const uint8_t*>(&*it));
         [[fallthrough]];
     case hardware::GET_DATETIME:
         DEBUG("GET_DATETIME");
@@ -629,23 +628,22 @@ void Hardware::handle_ext_request(hdlc::IoFrame* frame) {
     }
 }
 
+Hardware tmpHardware;
+
 bool Hardware::load()
 {
     INFO("Loading settings from EEPROM");
 
-    auto tmp = std::make_unique<Hardware>();
+    memset(&tmpHardware, 0, sizeof(Hardware));
 
-    if (!tmp) return false;
-    memset(tmp.get(), 0, sizeof(Hardware));
-
-    if (!I2C_Storage::load(*tmp)) {
+    if (!I2C_Storage::load(tmpHardware)) {
         ERROR("EEPROM read failed");
         return false;
     }
 
-    if (tmp->crc_ok())
+    if (tmpHardware.crc_ok())
     {
-        memcpy(this, tmp.get(), sizeof(Hardware));
+        memcpy(this, &tmpHardware, sizeof(Hardware));
         return true;
     }
     ERROR("EEPROM CRC error");

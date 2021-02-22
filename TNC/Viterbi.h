@@ -6,7 +6,9 @@
 #include "Convolution.h"
 #include "Util.h"
 
+#include <array>
 #include <limits>
+#include <span>
 
 namespace mobilinkd
 {
@@ -107,11 +109,45 @@ struct Viterbi
     state_transition_t nextState_;
     state_transition_t prevState_;
 
+    metrics_t prevMetrics, currMetrics;
+
+    std::array<std::bitset<NumStates>, 244> history_storage_;
+
     Viterbi(Trellis_ trellis)
     : cost_(makeCost<Trellis_, LLR_>(trellis))
     , nextState_(makeNextState(trellis))
     , prevState_(makePrevState(trellis))
     {}
+
+    [[gnu::noinline]]
+    void calculate_path_metric(
+        const std::array<int16_t, NumStates / 2>& cost0,
+        const std::array<int16_t, NumStates / 2>& cost1,
+        std::bitset<NumStates>& hist,
+        size_t j
+    ) {
+        auto& i0 = nextState_[j][0];
+        auto& i1 = nextState_[j][1];
+
+        int16_t c0 = cost0[j];
+        int16_t c1 = cost1[j];
+
+        auto& p0 = prevMetrics[j];
+        auto& p1 = prevMetrics[j + NumStates / 2];
+
+        int32_t m0 = p0 + c0;
+        int32_t m1 = p0 + c1;
+        int32_t m2 = p1 + c1;
+        int32_t m3 = p1 + c0;
+
+        bool d0 = m0 > m2;
+        bool d1 = m1 > m3;
+
+        hist.set(i0, d0);
+        hist.set(i1, d1);
+        currMetrics[i0] = d0 ? m2 : m0;
+        currMetrics[i1] = d1 ? m3 : m1;
+    }
 
     /**
      * Viterbi soft decoder using LLR inputs where 0 == erasure.
@@ -119,15 +155,16 @@ struct Viterbi
      * @return path metric for estimating BER.
      */
     template <size_t IN, size_t OUT>
-    size_t decode(std::array<int8_t, IN> in, std::array<uint8_t, OUT>& out)
+    size_t decode(std::array<int8_t, IN> const& in, std::array<uint8_t, OUT>& out)
     {
+        static_assert(sizeof(history_storage_) >= IN / 2);
+
         constexpr auto MAX_METRIC = std::numeric_limits<typename metrics_t::value_type>::max() / 2;
 
-        metrics_t prevMetrics, currMetrics;
         prevMetrics.fill(MAX_METRIC);
         prevMetrics[0] = 0;     // Starting point.
 
-        std::array<std::bitset<NumStates>, IN / 2> history;
+        std::span history(history_storage_.begin(), history_storage_.begin() + IN / 2);
 
         constexpr size_t BUTTERFLY_SIZE = NumStates / 2;
 
@@ -150,27 +187,7 @@ struct Viterbi
             
             for (size_t j = 0; j != BUTTERFLY_SIZE; ++j)
             {
-                auto& i0 = nextState_[j][0];
-                auto& i1 = nextState_[j][1];
-
-                int16_t c0 = cost0[j];
-                int16_t c1 = cost1[j];
-
-                auto& p0 = prevMetrics[j];
-                auto& p1 = prevMetrics[j + BUTTERFLY_SIZE];
-
-                int32_t m0 = p0 + c0;
-                int32_t m1 = p0 + c1;
-                int32_t m2 = p1 + c1;
-                int32_t m3 = p1 + c0;
-
-                bool d0 = m0 > m2;
-                bool d1 = m1 > m3;
-
-                hist.set(i0, d0);
-                hist.set(i1, d1);
-                currMetrics[i0] = d0 ? m2 : m0;
-                currMetrics[i1] = d1 ? m3 : m1;
+                calculate_path_metric(cost0, cost1, hist, j);
             }
             std::swap(currMetrics, prevMetrics);
             hindex += 1;

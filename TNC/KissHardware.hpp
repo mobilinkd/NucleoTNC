@@ -9,7 +9,6 @@
 
 #include <cstdint>
 #include <cstring>
-#include <memory>
 #include <array>
 
 extern "C" void updatePtt(void);

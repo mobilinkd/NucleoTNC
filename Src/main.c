@@ -90,7 +90,7 @@ osThreadId ioEventTaskHandle;
 uint32_t ioEventTaskBuffer[ 384 ];
 osStaticThreadDef_t ioEventTaskControlBlock;
 osThreadId audioInputTaskHandle;
-uint32_t audioInputTaskBuffer[ 640 ];
+uint32_t audioInputTaskBuffer[ 512 ];
 osStaticThreadDef_t audioInputTaskControlBlock;
 osThreadId modulatorTaskHandle;
 uint32_t modulatorTaskBuffer[ 384 ];
@@ -268,7 +268,7 @@ int main(void)
   ioEventTaskHandle = osThreadCreate(osThread(ioEventTask), NULL);
 
   /* definition and creation of audioInputTask */
-  osThreadStaticDef(audioInputTask, startAudioInputTask, osPriorityAboveNormal, 0, 640, audioInputTaskBuffer, &audioInputTaskControlBlock);
+  osThreadStaticDef(audioInputTask, startAudioInputTask, osPriorityAboveNormal, 0, 512, audioInputTaskBuffer, &audioInputTaskControlBlock);
   audioInputTaskHandle = osThreadCreate(osThread(audioInputTask), NULL);
 
   /* definition and creation of modulatorTask */
@@ -401,12 +401,12 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSE|RCC_OSCILLATORTYPE_MSI;
   RCC_OscInitStruct.LSEState = RCC_LSE_ON;
   RCC_OscInitStruct.MSIState = RCC_MSI_ON;
-  RCC_OscInitStruct.MSICalibrationValue = 0;
-  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
+  RCC_OscInitStruct.MSICalibrationValue = RCC_MSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_8;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
   RCC_OscInitStruct.PLL.PLLM = 1;
-  RCC_OscInitStruct.PLL.PLLN = 40;
+  RCC_OscInitStruct.PLL.PLLN = 10;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
   RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
@@ -439,10 +439,10 @@ void SystemClock_Config(void)
   PeriphClkInit.RngClockSelection = RCC_RNGCLKSOURCE_PLLSAI1;
   PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_MSI;
   PeriphClkInit.PLLSAI1.PLLSAI1M = 1;
-  PeriphClkInit.PLLSAI1.PLLSAI1N = 24;
+  PeriphClkInit.PLLSAI1.PLLSAI1N = 12;
   PeriphClkInit.PLLSAI1.PLLSAI1P = RCC_PLLP_DIV7;
-  PeriphClkInit.PLLSAI1.PLLSAI1Q = RCC_PLLQ_DIV2;
-  PeriphClkInit.PLLSAI1.PLLSAI1R = RCC_PLLR_DIV2;
+  PeriphClkInit.PLLSAI1.PLLSAI1Q = RCC_PLLQ_DIV4;
+  PeriphClkInit.PLLSAI1.PLLSAI1R = RCC_PLLR_DIV4;
   PeriphClkInit.PLLSAI1.PLLSAI1ClockOut = RCC_PLLSAI1_48M2CLK|RCC_PLLSAI1_ADC1CLK;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
@@ -878,19 +878,19 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Channel1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 5, 1);
   HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
   /* DMA1_Channel2_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 7, 1);
   HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
   /* DMA1_Channel3_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 6, 1);
   HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
   /* DMA1_Channel6_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 7, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel6_IRQn);
   /* DMA1_Channel7_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 6, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel7_IRQn);
   /* DMA2_Channel4_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Channel4_IRQn, 5, 0);
@@ -1065,6 +1065,12 @@ void assert_failed(uint8_t* file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
+void vApplicationStackOverflowHook(TaskHandle_t xTask, signed char *pcTaskName)
+{
+    snprintf(error_message, sizeof(error_message), "stack overflow %s", pcTaskName);
+    while (1);
+}
 
 /**
   * @}

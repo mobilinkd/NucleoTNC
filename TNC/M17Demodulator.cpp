@@ -16,7 +16,7 @@ void M17Demodulator::start()
 {
     SysClock80();
 
-    demod_filter.init(m17::rrc_taps.data());
+    demod_filter.init(m17::rrc_taps_9.data());
     passall(kiss::settings().options & KISS_OPTION_PASSALL);
 
     hadc1.Init.OversamplingMode = DISABLE;
@@ -36,7 +36,7 @@ void M17Demodulator::start()
     if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
         CxxErrorHandler();
 
-    startADC(1666, ADC_BLOCK_SIZE);
+    startADC(1665, ADC_BLOCK_SIZE);
 //    getModulator().start_loopback();
 }
 

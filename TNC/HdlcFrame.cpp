@@ -3,6 +3,7 @@
 
 #include "HdlcFrame.hpp"
 #include "Log.h"
+#include "main.h"
 #include "cmsis_os.h"
 
 namespace mobilinkd { namespace tnc { namespace hdlc {

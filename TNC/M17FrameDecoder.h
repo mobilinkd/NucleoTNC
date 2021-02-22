@@ -152,8 +152,10 @@ struct M17FrameDecoder
     Viterbi<decltype(trellis_), 4> viterbi_{trellis_};
     CRC16<0x5935, 0xFFFF> crc_;
 
+
     enum class State {LSF, STREAM, BASIC_PACKET, FULL_PACKET};
     enum class SyncWordType { LSF, STREAM, PACKET, RESERVED };
+    enum class DecodeResult { FAIL, OK, EOS };
 
     State state_ = State::LSF;
 
@@ -172,6 +174,7 @@ struct M17FrameDecoder
     audio_callback_t audio_callback_;
     union
     {
+        std::array<uint8_t, 30> lich;
         std::array<uint8_t, 240> lsf;
         std::array<uint8_t, 206> packet;
         std::array<uint8_t, 160> stream;
@@ -261,7 +264,8 @@ struct M17FrameDecoder
      * @param ber
      * @return
      */
-    bool decode_lsf(buffer_t& buffer, tnc::hdlc::IoFrame*& lsf, int& ber)
+    [[gnu::noinline]]
+    DecodeResult decode_lsf(buffer_t& buffer, tnc::hdlc::IoFrame*& lsf, int& ber)
     {
         depuncture(buffer, tmp.lsf, P1);
         ber = viterbi_.decode(tmp.lsf, output.lsf);
@@ -282,16 +286,16 @@ struct M17FrameDecoder
                 lsf->push_back(0);
                 lsf->push_back(0);
                 lsf->source(0x20);
-                return true;
+                return DecodeResult::OK;
             }
             lsf = nullptr;
-            return true;
+            return DecodeResult::OK;
         }
         else
         {
             lich_segments = 0;
             output.lsf.fill(0);
-            return false;
+            return DecodeResult::FAIL;
         }
     }
 
@@ -315,7 +319,7 @@ struct M17FrameDecoder
                 return false;
             }
             decoded >>= 12; // Remove check bits and parity.
-            INFO("Golay decode good for %08lx (%du)", decoded, i);
+            DEBUG("Golay decode good for %08lx (%du)", decoded, i);
             // append codeword.
             if (i & 1)
             {
@@ -331,47 +335,51 @@ struct M17FrameDecoder
         return true;
     }
 
-    bool decode_lich(buffer_t& buffer, tnc::hdlc::IoFrame*& lsf, int& ber)
+    [[gnu::noinline]]
+    DecodeResult decode_lich(buffer_t& buffer, tnc::hdlc::IoFrame*& lsf, int& ber)
     {
         tmp.lich.fill(0);
         // Read the 4 12-bit codewords from LICH into buffers.lich.
-        if (!unpack_lich(buffer)) return false;
+        if (!unpack_lich(buffer)) return DecodeResult::FAIL;
 
         uint8_t fragment_number = tmp.lich[5];   // Get fragment number.
         fragment_number = (fragment_number >> 5) & 7;
 
         // Copy decoded LICH to superframe buffer.
         std::copy(tmp.lich.begin(), tmp.lich.begin() + 5,
-            output.lsf.begin() + (fragment_number * 5));
+            output.lich.begin() + (fragment_number * 5));
 
         lich_segments |= (1 << fragment_number);        // Indicate segment received.
         INFO("got segment %d, have %02x", int(fragment_number), int(lich_segments));
-        if (lich_segments != 0x3F) return false;        // More to go...
+        if (lich_segments != 0x3F) return DecodeResult::FAIL;        // More to go...
 
-        detail::to_bytes(output.lsf, current_lsf);
         crc_.reset();
-        for (auto c : current_lsf) crc_(c);
+        for (auto c : output.lich) crc_(c);
         auto checksum = crc_.get();
         INFO("LICH crc = %04x", checksum);
         if (checksum == 0)
         {
             state_ = State::STREAM;
             lsf = tnc::hdlc::acquire_wait();
-            for (auto c : current_lsf) lsf->push_back(c);
+            for (auto c : output.lich) lsf->push_back(c);
             lsf->push_back(0);
             lsf->push_back(0);
             lsf->source(0x20);
             ber = 0;
-            return true;
+            return DecodeResult::OK;
         }
+#ifdef KISS_LOGGING
+        dump(output.lich);
+#endif
         // Failed CRC... try again.
         lich_segments = 0;
-        output.lsf.fill(0);
+        output.lich.fill(0);
         ber = 128;
-        return false;
+        return DecodeResult::FAIL;
     }
 
-    bool decode_stream(buffer_t& buffer, tnc::hdlc::IoFrame*& stream, int& ber)
+    [[gnu::noinline]]
+    DecodeResult decode_stream(buffer_t& buffer, tnc::hdlc::IoFrame*& stream, int& ber)
     {
         std::array<uint8_t, 20> stream_segment;
 
@@ -391,10 +399,15 @@ struct M17FrameDecoder
         for (auto c : stream_segment) crc_(c);
         auto checksum = crc_.get();
         INFO("crc = %04x", checksum);   // Otherwise ignored.
+        if ((checksum == 0) && (stream_segment[0] & 0x80))
+        {
+            INFO("EOS");
+            state_ = State::LSF;
+        }
         stream->push_back(0);
         stream->push_back(0);
         stream->source(0x20);
-        return true;
+        return state_ == State::LSF ? DecodeResult::EOS : DecodeResult::OK;
     }
 
     /**
@@ -408,7 +421,8 @@ struct M17FrameDecoder
      * @param ber the estimated BER (really more SNR) of the packet.
      * @return true if a valid packet is returned, otherwise false.
      */
-    bool decode_basic_packet(buffer_t& buffer, tnc::hdlc::IoFrame*& packet, int& ber)
+    [[gnu::noinline]]
+    DecodeResult decode_basic_packet(buffer_t& buffer, tnc::hdlc::IoFrame*& packet, int& ber)
     {
         std::array<uint8_t, 26> packet_segment;
 
@@ -439,7 +453,7 @@ struct M17FrameDecoder
                 current_packet->source(0);
                 packet = current_packet;
                 current_packet = nullptr;
-                return true;
+                return DecodeResult::OK;
             }
             WARN("packet bad fcs = %04x, crc = %04x", current_packet->fcs(), current_packet->crc());
             if (passall_)
@@ -452,7 +466,7 @@ struct M17FrameDecoder
                 tnc::hdlc::release(current_packet);
                 current_packet = nullptr;
             }
-            return false;
+            return DecodeResult::FAIL;
         }
 
         size_t frame_number = (packet_segment[25] & 0x7F) >> 2;
@@ -467,7 +481,7 @@ struct M17FrameDecoder
         }
 
         packet = nullptr;
-        return true;
+        return DecodeResult::OK;
     }
 
     /**
@@ -481,7 +495,8 @@ struct M17FrameDecoder
      * @param ber
      * @return
      */
-    bool decode_full_packet(buffer_t& buffer, tnc::hdlc::IoFrame*& packet, int& ber)
+    [[gnu::noinline]]
+    DecodeResult decode_full_packet(buffer_t& buffer, tnc::hdlc::IoFrame*& packet, int& ber)
     {
         std::array<uint8_t, 26> packet_segment;
 
@@ -510,7 +525,7 @@ struct M17FrameDecoder
             current_packet = nullptr;
             packet_frame_counter = 0;
             state_ = State::LSF;
-            return true;
+            return DecodeResult::OK;
         }
 
         size_t frame_number = (packet_segment[25] & 0x7F) >> 2;
@@ -525,7 +540,7 @@ struct M17FrameDecoder
         }
 
         packet = nullptr;
-        return true;
+        return DecodeResult::OK;
     }
 
     /**
@@ -564,7 +579,8 @@ struct M17FrameDecoder
      *  - FULL_PACKET when any packet frame is received.
      *  - LSF when the EOS indicator is set, or when a stream frame is received.
      */
-    bool operator()(SyncWordType frame_type, buffer_t& buffer,
+    [[gnu::noinline]]
+    DecodeResult operator()(SyncWordType frame_type, buffer_t& buffer,
         tnc::hdlc::IoFrame*& result, int& ber)
     {
         derandomize_(buffer);
@@ -603,7 +619,7 @@ struct M17FrameDecoder
             break;
         }
 
-        return false;
+        return DecodeResult::FAIL;
     }
 };
 
