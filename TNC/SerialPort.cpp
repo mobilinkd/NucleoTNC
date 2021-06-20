@@ -139,12 +139,11 @@ void startSerialTask(void const* arg)
         if (evt.value.v < FLASH_BASE) // Assumes FLASH_BASE < SRAM_BASE.
         {
             // Error received.
-            hdlc::release(frame);
+            frame->clear();
 #ifndef NUCLEOTNC
             ERROR("UART Error: %08lx", uart_error.load());
 #endif
             uart_error.store(HAL_UART_ERROR_NONE);
-            frame = hdlc::acquire_wait();
             HAL_UART_Receive_DMA(&huart_serial, rxBuffer, RX_BUFFER_SIZE * 2);
             __HAL_UART_ENABLE_IT(&huart_serial, UART_IT_IDLE);
             continue;
@@ -183,6 +182,9 @@ void startSerialTask(void const* arg)
                     if (hdlc::ioFramePool().size() < (hdlc::ioFramePool().capacity() / 4))
                     {
                         UART_DMAPauseReceive(&huart_serial);
+#ifndef NUCLEOTNC
+                        WARN("frame pool low");
+#endif
                         while (hdlc::ioFramePool().size() < (hdlc::ioFramePool().capacity() / 2))
                         {
                             osThreadYield();
@@ -206,22 +208,19 @@ void startSerialTask(void const* arg)
                 switch (c) {
                 case TFESC:
                     if (not frame->push_back(FESC)) {
-                        hdlc::release(frame);
+                        frame->clear();
                         state = WAIT_FBEGIN;  // Drop frame;
-                        frame = hdlc::acquire_wait();
                     }
                     break;
                 case TFEND:
                     if (not frame->push_back(FEND)) {
-                        hdlc::release(frame);
+                        frame->clear();
                         state = WAIT_FBEGIN;  // Drop frame;
-                        frame = hdlc::acquire_wait();
                     }
                     break;
                 default:
-                    hdlc::release(frame);
+                    frame->clear();
                     state = WAIT_FBEGIN;  // Drop frame;
-                    frame = hdlc::acquire_wait();
                 }
                 break;
             }
@@ -310,21 +309,28 @@ extern "C" void HAL_UART_ErrorCallback(UART_HandleTypeDef* huart)
 
 namespace mobilinkd { namespace tnc {
 
+
+uint32_t serialTaskBuffer[ 128 ] __attribute__((section(".bss3")));
+osStaticThreadDef_t serialTaskControlBlock __attribute__((section(".bss3")));
+
+uint8_t serialQueueBuffer[ 32 * sizeof( void* ) ] __attribute__((section(".bss3")));
+osStaticMessageQDef_t serialQueueControlBlock __attribute__((section(".bss3")));
+
+osMutexDef(serialMutex);
+
 void SerialPort::init()
 {
     if (serialTaskHandle_) return;
 
-    osMessageQDef(uartQueue, 32, void*);
-    queue_ = osMessageCreate(osMessageQ(uartQueue), 0);
+    osMessageQStaticDef(serialQueue, 32, void*, serialQueueBuffer,
+        &serialQueueControlBlock);
+    queue_ = osMessageCreate(osMessageQ(serialQueue), 0);
 
-    osMutexDef(uartMutex);
-    mutex_ = osMutexCreate(osMutex(uartMutex));
+    mutex_ = osMutexCreate(osMutex(serialMutex));
 
-    osThreadDef(serialTask, startSerialTask, osPriorityAboveNormal, 0, 128);
+    osThreadStaticDef(serialTask, startSerialTask, osPriorityAboveNormal, 0,
+        128, serialTaskBuffer, &serialTaskControlBlock);
     serialTaskHandle_ = osThreadCreate(osThread(serialTask), this);
-#ifndef NUCLEOTNC
-    DEBUG("serialTaskHandle_ = %p", serialTaskHandle_);
-#endif
 }
 
 bool SerialPort::open()
