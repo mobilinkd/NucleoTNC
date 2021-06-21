@@ -123,6 +123,7 @@ extern "C" {
 
 // These are no-ops on NucleoTNC.
 void SysClock80(void);
+void SysClock72(void);
 void SysClock48(void);
 void SysClock4(void);
 
