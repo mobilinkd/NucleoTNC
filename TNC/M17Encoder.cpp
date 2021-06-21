@@ -151,6 +151,13 @@ void M17Encoder::run()
     osThreadSuspend(encoderTaskHandle);
 }
 
+/**
+ *
+ * @param frame is the frame to transmit. Ownership has been transferred
+ *  and this function is responsible for either transferring ownership
+ *  downstream or releasing it.
+ * @param type is whether this is a basic packet or encapsulated packet.
+ */
 void M17Encoder::process_packet(tnc::hdlc::IoFrame* frame, FrameType type)
 {
     using namespace mobilinkd::tnc::kiss;
@@ -188,6 +195,7 @@ void M17Encoder::process_packet(tnc::hdlc::IoFrame* frame, FrameType type)
     default:
         ERROR("M17 encoder bad state");
     }
+    release(frame);
 }
 
 void M17Encoder::process_stream(tnc::hdlc::IoFrame* frame, FrameType type)
