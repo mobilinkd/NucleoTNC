@@ -63,7 +63,7 @@ struct LinkSetupFrame
         const auto p = reinterpret_cast<uint8_t*>(&encoded);
 
         encoded_call_t result;
-        std::copy(p, p + 6, result.begin());
+        std::copy(p, p + 6, result.rbegin());
         
         return result;
     }
@@ -74,7 +74,7 @@ struct LinkSetupFrame
 
         uint64_t encoded = 0; // This only works on little endian architectures.
         auto p = reinterpret_cast<uint8_t*>(&encoded);
-        std::copy(callsign.begin(), callsign.end(), p);
+        std::copy(callsign.rbegin(), callsign.rend(), p);
 
         // decode each base-40 digit and map them to the appriate character.
         call_t result;
