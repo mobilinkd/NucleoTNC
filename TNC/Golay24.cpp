@@ -3,6 +3,9 @@
 
 #include "Golay24.h"
 
+#include <cstdint>
+#include <cstddef>
+
 namespace mobilinkd {
 namespace Golay24
 {
