@@ -26,7 +26,7 @@ struct M17Modulator : Modulator
     // Six buffers per M17 frame, or 12 half-buffer interrupts.
     static constexpr uint8_t UPSAMPLE = 10;
     static constexpr uint32_t BLOCKSIZE = 4;
-    static constexpr uint32_t STATE_SIZE = (m17::FILTER_TAP_NUM_15 / UPSAMPLE) + BLOCKSIZE - 1;
+    static constexpr uint32_t STATE_SIZE = (m17::FILTER_TAP_NUM_9 / UPSAMPLE) + BLOCKSIZE - 1;
     static constexpr int16_t DAC_BUFFER_LEN = 80;               // 8 symbols, 16 bits, 2 bytes.
     static constexpr int16_t TRANSFER_LEN = DAC_BUFFER_LEN / 2; // 4 symbols, 8 bits, 1 byte.
     static constexpr uint16_t VREF = 4095;
@@ -48,8 +48,8 @@ struct M17Modulator : Modulator
     : dacOutputQueueHandle_(queue), ptt_(ptt)
     {
         arm_fir_interpolate_init_f32(
-            &fir_interpolator, UPSAMPLE, m17::FILTER_TAP_NUM_15,
-            (float32_t*) m17::rrc_taps_f15.data(), fir_state.data(), BLOCKSIZE);
+            &fir_interpolator, UPSAMPLE, m17::FILTER_TAP_NUM_9,
+            (float32_t*) m17::rrc_taps_f9.data(), fir_state.data(), BLOCKSIZE);
     }
 
     ~M17Modulator() override {}
@@ -314,7 +314,7 @@ private:
             buffer[i] = adjust_level(tmp[i]);
         }
     }
-
+#if 0
     [[gnu::noinline]]
     void fill_empty(int16_t* buffer)
     {
@@ -326,6 +326,16 @@ private:
         for (size_t i = 0; i != TRANSFER_LEN; ++i)
         {
             buffer[i] = adjust_level(tmp[i]);
+        }
+    }
+#endif
+
+    [[gnu::noinline]]
+    void fill_empty(int16_t* buffer)
+    {
+        for (size_t i = 0; i != TRANSFER_LEN; ++i)
+        {
+            buffer[i] = 2048;
         }
     }
 };

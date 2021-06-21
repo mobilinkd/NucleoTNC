@@ -11,10 +11,10 @@ void M17Modulator::init(const kiss::Hardware& hw)
 
     (void) hw; // unused
 
-    SysClock80();
+    SysClock72();
 
-    // Configure 80MHz clock for 48kHz.
-    htim7.Init.Period = 1665;
+    // Configure 72MHz clock for 48kHz.
+    htim7.Init.Period = 1499;
     htim7.Init.Prescaler = 0;
     if (HAL_TIM_Base_Init(&htim7) != HAL_OK)
     {
