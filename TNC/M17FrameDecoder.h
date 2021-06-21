@@ -155,7 +155,7 @@ struct M17FrameDecoder
 
     enum class State {LSF, STREAM, BASIC_PACKET, FULL_PACKET};
     enum class SyncWordType { LSF, STREAM, PACKET, RESERVED };
-    enum class DecodeResult { FAIL, OK, EOS };
+    enum class DecodeResult { FAIL, OK, EOS, INCOMPLETE };
 
     State state_ = State::LSF;
 
@@ -205,6 +205,8 @@ struct M17FrameDecoder
 
     ~M17FrameDecoder()
     {}
+
+    State state() const { return state_; }
 
     void reset() { state_ = State::LSF; }
 
@@ -275,6 +277,9 @@ struct M17FrameDecoder
         for (auto c : current_lsf) crc_(c);
         auto checksum = crc_.get();
         INFO("LSF crc = %04x", checksum);
+#ifdef KISS_LOGGING
+        dump(current_lsf);
+#endif
 
         if (checksum == 0)
         {
@@ -319,7 +324,7 @@ struct M17FrameDecoder
                 return false;
             }
             decoded >>= 12; // Remove check bits and parity.
-            DEBUG("Golay decode good for %08lx (%du)", decoded, i);
+            TNC_DEBUG("Golay decode good for %08lx (%du)", decoded, i);
             // append codeword.
             if (i & 1)
             {
@@ -351,7 +356,7 @@ struct M17FrameDecoder
 
         lich_segments |= (1 << fragment_number);        // Indicate segment received.
         INFO("got segment %d, have %02x", int(fragment_number), int(lich_segments));
-        if (lich_segments != 0x3F) return DecodeResult::FAIL;        // More to go...
+        if (lich_segments != 0x3F) return DecodeResult::INCOMPLETE;        // More to go...
 
         crc_.reset();
         for (auto c : output.lich) crc_(c);
@@ -359,6 +364,7 @@ struct M17FrameDecoder
         INFO("LICH crc = %04x", checksum);
         if (checksum == 0)
         {
+        	lich_segments = 0;
             state_ = State::STREAM;
             lsf = tnc::hdlc::acquire_wait();
             for (auto c : output.lich) lsf->push_back(c);
@@ -366,6 +372,7 @@ struct M17FrameDecoder
             lsf->push_back(0);
             lsf->source(0x20);
             ber = 0;
+            dump(output.lich);
             return DecodeResult::OK;
         }
 #ifdef KISS_LOGGING
@@ -375,13 +382,14 @@ struct M17FrameDecoder
         lich_segments = 0;
         output.lich.fill(0);
         ber = 128;
-        return DecodeResult::FAIL;
+        return DecodeResult::INCOMPLETE;
     }
 
     [[gnu::noinline]]
     DecodeResult decode_stream(buffer_t& buffer, tnc::hdlc::IoFrame*& stream, int& ber)
     {
         std::array<uint8_t, 20> stream_segment;
+        DecodeResult result = DecodeResult::OK;
 
         unpack_lich(buffer);
 
@@ -403,11 +411,12 @@ struct M17FrameDecoder
         {
             INFO("EOS");
             state_ = State::LSF;
+            result = DecodeResult::EOS;
         }
         stream->push_back(0);
         stream->push_back(0);
         stream->source(0x20);
-        return state_ == State::LSF ? DecodeResult::EOS : DecodeResult::OK;
+        return result;
     }
 
     /**
