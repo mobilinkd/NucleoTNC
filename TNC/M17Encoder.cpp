@@ -528,7 +528,10 @@ void M17Encoder::encoderTask(void const*)
         if (evt.status != osEventMessage) continue;
 
         auto frame = static_cast<IoFrame*>(evt.value.p);
-        if (frame->size() != 48) WARN("Bad frame size %u", frame->size());
+        if (frame->size() != 48)
+        {
+            WARN("Bad frame size %u", frame->size());
+        }
 
         for (uint8_t c : *frame) modulator.send(c); // This takes ~40ms.
 
