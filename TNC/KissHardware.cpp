@@ -43,10 +43,10 @@ int powerOffViaUSB(void)
 namespace mobilinkd { namespace tnc { namespace kiss {
 
 #ifdef NUCLEOTNC
-const char FIRMWARE_VERSION[] = "2.1.8";
+const char FIRMWARE_VERSION[] = "2.2.2";
 const char HARDWARE_VERSION[] = "Mobilinkd NucleoTNC";
 #else
-const char FIRMWARE_VERSION[] = "2.1.8";
+const char FIRMWARE_VERSION[] = "2.2.2";
 const char HARDWARE_VERSION[] = "Mobilinkd TNC3 2.1.1";
 #endif
 
@@ -151,7 +151,6 @@ void reply_ext(const std::array<uint8_t, N>& cmd, const uint8_t* data, uint16_t 
     for (uint16_t i = 0; i != len and data[i] != 0; i++)
         buffer[i + N] = data[i];
     ioport->write(buffer, len + 2, 6, osWaitForever);
-    free(buffer);
 }
 
 template <size_t N>
