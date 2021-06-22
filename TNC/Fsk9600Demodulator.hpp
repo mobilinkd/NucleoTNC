@@ -54,7 +54,7 @@ struct Fsk9600Demodulator : IDemodulator
 
     void start() override
     {
-        SysClock80();
+        SysClock72();
 
         auto const& bpf_coeffs = bpf_bank[kiss::settings().rx_twist + 3];
         const q15_t* bpf = bpf_coeffs.data();
@@ -78,7 +78,7 @@ struct Fsk9600Demodulator : IDemodulator
         if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
             CxxErrorHandler();
 
-        startADC(416, ADC_BLOCK_SIZE);
+        startADC(374, ADC_BLOCK_SIZE);
     }
 
     void stop() override
