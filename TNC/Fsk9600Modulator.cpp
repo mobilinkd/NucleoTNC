@@ -38,7 +38,7 @@ void Fsk9600Modulator::init(const kiss::Hardware& hw)
 
     SysClock72();
 
-    // Configure 80MHz clock for 192ksps.
+    // Configure 72MHz clock for 192ksps.
     htim7.Init.Period = 374;
     if (HAL_TIM_Base_Init(&htim7) != HAL_OK)
     {

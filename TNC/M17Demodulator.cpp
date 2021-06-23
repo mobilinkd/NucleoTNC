@@ -29,11 +29,11 @@ void M17Demodulator::start()
     polarity = kiss::settings().rx_rev_polarity() ? -1 : 1;
     audio::virtual_ground = (VREF + 1) / 2;
 
-//    hadc1.Init.OversamplingMode = DISABLE;
-//    if (HAL_ADC_Init(&hadc1) != HAL_OK)
-//    {
-//        CxxErrorHandler();
-//    }
+    hadc1.Init.OversamplingMode = ENABLE;
+    if (HAL_ADC_Init(&hadc1) != HAL_OK)
+    {
+        CxxErrorHandler();
+    }
 
     ADC_ChannelConfTypeDef sConfig;
 
