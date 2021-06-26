@@ -19,10 +19,11 @@
 #include "stm32l4xx_hal.h"
 
 #include <algorithm>
-#include <numeric>
-#include <cstring>
-#include <cstdint>
 #include <atomic>
+#include <cstdint>
+#include <cstring>
+#include <numeric>
+#include <type_traits>
 
 extern osMessageQId ioEventQueueHandle;
 
