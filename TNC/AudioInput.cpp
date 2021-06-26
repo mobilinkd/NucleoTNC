@@ -147,22 +147,44 @@ q15_t normalized[ADC_BUFFER_SIZE];
 
 IDemodulator* getDemodulator()
 {
-    static Afsk1200Demodulator afsk1200;
-    static Fsk9600Demodulator fsk9600;
-    static M17Demodulator m17;
+    constexpr auto mem_size = std::max({
+        sizeof(Afsk1200Demodulator),
+        sizeof(Fsk9600Demodulator),
+        sizeof(M17Demodulator),
+    });
 
-    switch (kiss::settings().modem_type)
+    using storage_t = std::aligned_storage<mem_size, 4>::type;
+
+    static storage_t mem;
+    static IDemodulator* demod = nullptr;
+
+    static uint8_t modem_type = 0;
+    if (modem_type != kiss::settings().modem_type)
     {
-    case kiss::Hardware::ModemType::AFSK1200:
-        return &afsk1200;
-    case kiss::Hardware::ModemType::FSK9600:
-        return &fsk9600;
-    case kiss::Hardware::ModemType::M17:
-        return &m17;
-    default:
-        ERROR("Invalid demodulator");
-        CxxErrorHandler();
+        if (demod)
+        {
+            demod->~IDemodulator();
+        }
+
+        switch (kiss::settings().modem_type)
+        {
+        case kiss::Hardware::ModemType::AFSK1200:
+            demod = new (&mem) Afsk1200Demodulator();
+            break;
+        case kiss::Hardware::ModemType::FSK9600:
+            demod = new (&mem) Fsk9600Demodulator();
+            break;
+        case kiss::Hardware::ModemType::M17:
+            demod = new (&mem) M17Demodulator();
+            break;
+        default:
+            ERROR("Invalid demodulator");
+            CxxErrorHandler();
+        }
+        modem_type = kiss::settings().modem_type;
     }
+
+    return demod;
 }
 
 void demodulatorTask() {
