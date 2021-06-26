@@ -30,19 +30,47 @@ constexpr std::bitset<sizeof...(Is)> make_bitset(std::index_sequence<Is...>, Tup
     return result;
 }
 
-template<typename FloatType, size_t LLR>
-constexpr std::array<std::tuple<FloatType, std::tuple<int8_t, int8_t>>, (((1 << (LLR - 1)) - 1) * 6 ) + 1> make_llr_map()
+/**
+ * This is the max value for the LLR based on size N.
+ */
+template <size_t N>
+constexpr size_t llr_limit()
 {
-    constexpr size_t size = (((1 << (LLR - 1)) - 1) * 6 ) + 1;
+    return (1 << (N - 1)) - 1;
+}
+
+/**
+ * There are (2^(N-1)-1) elements (E) per segment (e.g. N=4, E=7; N=3, E=3).
+ * These contain the LLR values 1..E. There are 6 segments in the LLR map:
+ *  1. (-Inf,-2]
+ *  2. (-2, -1]
+ *  3. (-1, 0]
+ *  4. (0, 1]
+ *  5. (1, 2]
+ *  6. (2, Inf)
+ * 
+ * Note the slight asymmetry.  This is OK as we are dealing with floats and
+ * it only matters to an epsilon of the float type.
+ */
+template <size_t N>
+constexpr size_t llr_size()
+{
+    return llr_limit<N>() * 6 + 1;
+}
+
+template<typename FloatType, size_t LLR>
+constexpr std::array<std::tuple<FloatType, std::tuple<int8_t, int8_t>>, llr_size<LLR>()> make_llr_map()
+{
+    constexpr size_t size = llr_size<LLR>();
     std::array<std::tuple<FloatType, std::tuple<int8_t, int8_t>>, size> result;
 
-    constexpr int8_t limit = (1 << (LLR - 1)) - 1;
+    constexpr int8_t limit = llr_limit<LLR>();
     constexpr FloatType inc = 1.0 / FloatType(limit);
     int8_t i = limit;
     int8_t j = limit;
 
     // Output must be ordered by k, ascending.
-    FloatType k = -3.0;
+    FloatType k = -3.0 + inc;
     for (size_t index = 0; index != size; ++index)
     {
         auto& a = result[index];
@@ -50,19 +78,22 @@ constexpr std::array<std::tuple<FloatType, std::tuple<int8_t, int8_t>>, (((1 << 
         std::get<0>(std::get<1>(a)) = i;
         std::get<1>(std::get<1>(a)) = j;
 
-        if (k + 1.0 < inc / -2.0)
+        if (k + 1.0 < 0)
         {
             j--;
+            if (j == 0) j = -1;
             if (j < -limit) j = -limit;
         }
-        else if (k - 1.0 < inc / -2.0)
+        else if (k - 1.0 < 0)
         {
             i--;
+            if (i == 0) i = -1;
             if (i < -limit) i = -limit;
         }
         else
         {
             j++;
+            if (j == 0) j = 1;
             if (j > limit) j = limit;
         }
         k += inc;
@@ -96,8 +127,10 @@ template <typename FloatType, size_t LLR>
 auto llr(FloatType sample)
 {
     static constexpr auto symbol_map = detail::make_llr_map<FloatType, LLR>();
+    static constexpr FloatType MAX_VALUE = 3.0;
+    static constexpr FloatType MIN_VALUE = -3.0;
 
-    FloatType s = std::min(3.0, std::max(-3.0, sample));
+    FloatType s = std::min(MAX_VALUE, std::max(MIN_VALUE, sample));
 
     auto it = std::lower_bound(symbol_map.begin(), symbol_map.end(), s,
         [](std::tuple<FloatType, std::tuple<int8_t, int8_t>> const& e, FloatType s){
@@ -179,6 +212,7 @@ template <size_t N>
 constexpr bool get_bit_index(const std::array<uint8_t, N>& input, size_t index)
 {
     auto byte_index = index >> 3;
+    assert(byte_index < N);
     auto bit_index = 7 - (index & 7);
 
     return (input[byte_index] & (1 << bit_index)) >> bit_index;
@@ -188,6 +222,7 @@ template <size_t N>
 void set_bit_index(std::array<uint8_t, N>& input, size_t index)
 {
     auto byte_index = index >> 3;
+    assert(byte_index < N);
     auto bit_index = 7 - (index & 7);
     input[byte_index] |= (1 << bit_index);
 }
@@ -196,6 +231,7 @@ template <size_t N>
 void reset_bit_index(std::array<uint8_t, N>& input, size_t index)
 {
     auto byte_index = index >> 3;
+    assert(byte_index < N);
     auto bit_index = 7 - (index & 7);
     input[byte_index] &= ~(1 << bit_index);
 }
@@ -257,6 +293,26 @@ constexpr auto to_byte_array(std::array<T, N> in)
         }
     }
     return out;
+}
+
+template <typename T, size_t N>
+constexpr void to_byte_array(std::array<T, N> in, std::array<uint8_t, (N + 7) / 8>& out)
+{
+    size_t i = 0;
+    size_t b = 0;
+    uint8_t tmp = 0;
+    for (auto c : in)
+    {
+        tmp |= (c << (7 - b));
+        if (++b == 8)
+        {
+            out[i] = tmp;
+            tmp = 0;
+            ++i;
+            b = 0;
+        }
+    }
+    if (i < out.size()) out[i] = tmp;
 }
 
 } // mobilinkd

@@ -7,8 +7,11 @@
 #include "Util.h"
 
 #include <array>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <iterator>
 #include <limits>
-#include <span>
 
 namespace mobilinkd
 {
@@ -111,7 +114,10 @@ struct Viterbi
 
     metrics_t prevMetrics, currMetrics;
 
-    std::array<std::bitset<NumStates>, 244> history_storage_;
+    // This is the maximum amount of storage needed for M17.  If used for
+    // other modes, this may need to be increased.  This will never overflow
+    // because of a static assertion in the decode() function.
+    std::array<std::bitset<NumStates>, 244> history_;
 
     Viterbi(Trellis_ trellis)
     : cost_(makeCost<Trellis_, LLR_>(trellis))
@@ -119,7 +125,6 @@ struct Viterbi
     , prevState_(makePrevState(trellis))
     {}
 
-    [[gnu::noinline]]
     void calculate_path_metric(
         const std::array<int16_t, NumStates / 2>& cost0,
         const std::array<int16_t, NumStates / 2>& cost1,
@@ -129,8 +134,8 @@ struct Viterbi
         auto& i0 = nextState_[j][0];
         auto& i1 = nextState_[j][1];
 
-        int16_t c0 = cost0[j];
-        int16_t c1 = cost1[j];
+        auto& c0 = cost0[j];
+        auto& c1 = cost1[j];
 
         auto& p0 = prevMetrics[j];
         auto& p1 = prevMetrics[j + NumStates / 2];
@@ -157,14 +162,15 @@ struct Viterbi
     template <size_t IN, size_t OUT>
     size_t decode(std::array<int8_t, IN> const& in, std::array<uint8_t, OUT>& out)
     {
-        static_assert(sizeof(history_storage_) >= IN / 2);
+        static_assert(sizeof(history_) >= IN / 2);
 
         constexpr auto MAX_METRIC = std::numeric_limits<typename metrics_t::value_type>::max() / 2;
 
         prevMetrics.fill(MAX_METRIC);
         prevMetrics[0] = 0;     // Starting point.
 
-        std::span history(history_storage_.begin(), history_storage_.begin() + IN / 2);
+        auto hbegin = history_.begin();
+        auto hend = history_.begin() + IN / 2;
 
         constexpr size_t BUTTERFLY_SIZE = NumStates / 2;
 
@@ -172,31 +178,39 @@ struct Viterbi
         std::array<int16_t, BUTTERFLY_SIZE> cost0;
         std::array<int16_t, BUTTERFLY_SIZE> cost1;
 
-        for (size_t i = 0; i != IN; i += 2)
+        for (size_t i = 0; i != IN; i += 2, hindex += 1)
         {
-            auto& hist = history[hindex];
             int16_t s0 = in[i];
             int16_t s1 = in[i + 1];
+            cost0.fill(0);
+            cost1.fill(0);
 
             for (size_t j = 0; j != BUTTERFLY_SIZE; ++j)
             {
-                int16_t c = std::abs(cost_[j][0] - s0) + std::abs(cost_[j][1] - s1);
-                cost0[j] = c;
-                cost1[j] = METRIC - c;
+                if (s0) // is not erased
+                {
+                    cost0[j] = std::abs(cost_[j][0] - s0);
+                    cost1[j] = std::abs(cost_[j][0] + s0);
+                }
+                if (s1) // is not erased
+                {
+                    cost0[j] += std::abs(cost_[j][1] - s1);
+                    cost1[j] += std::abs(cost_[j][1] + s1);
+                }
             }
             
             for (size_t j = 0; j != BUTTERFLY_SIZE; ++j)
             {
-                calculate_path_metric(cost0, cost1, hist, j);
+                calculate_path_metric(cost0, cost1, history_[hindex], j);
             }
             std::swap(currMetrics, prevMetrics);
-            hindex += 1;
         }
 
         // Find starting point. Should be 0 for properly flushed CCs.
-        // However, 0 may not be the path with the least errors.
+        // However, 0 may not be the path with the fewest errors.
         size_t min_element = 0;
         int32_t min_cost = prevMetrics[0];
+
         for (size_t i = 0; i != NumStates; ++i)
         {
             if (prevMetrics[i] < min_cost)
@@ -206,21 +220,22 @@ struct Viterbi
             }
         }
 
-        size_t ber = min_cost / (METRIC >> 1); // Cost is at least equal to # of erasures.
+        size_t cost = std::round(min_cost / float(detail::llr_limit<LLR_>()));
 
         // Do chainback.
         auto oit = std::rbegin(out);
-        auto hit = std::rbegin(history);
+        auto hit = std::make_reverse_iterator(hend);        // rbegin
+        auto hrend = std::make_reverse_iterator(hbegin);    // rend
         size_t next_element = min_element;
         size_t index = IN / 2;
-        while (oit != std::rend(out) && hit != std::rend(history))
+        while (oit != std::rend(out) && hit != hrend)
         {
             auto v = (*hit++)[next_element];
             if (index-- <= OUT) *oit++ = next_element & 1;
             next_element = prevState_[next_element][v];
         }
 
-        return ber;
+        return cost;
     }
 };
 
