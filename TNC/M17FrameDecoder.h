@@ -165,7 +165,7 @@ struct M17FrameDecoder
     using lsf_buffer_t = std::array<uint8_t, 30>;
 
     using audio_conv_buffer_t = std::array<uint8_t, 34>;
-    using audio_buffer_t = std::array<uint8_t, 20>;
+    using audio_buffer_t = std::array<uint8_t, 18>;
 
     using link_setup_callback_t = std::function<void(audio_buffer_t)>;
     using audio_callback_t = std::function<void(audio_buffer_t)>;
@@ -177,7 +177,7 @@ struct M17FrameDecoder
         std::array<uint8_t, 30> lich;
         std::array<uint8_t, 240> lsf;
         std::array<uint8_t, 206> packet;
-        std::array<uint8_t, 160> stream;
+        std::array<uint8_t, 144> stream;
     } output;
 
     union {
@@ -388,7 +388,7 @@ struct M17FrameDecoder
     [[gnu::noinline]]
     DecodeResult decode_stream(buffer_t& buffer, tnc::hdlc::IoFrame*& stream, int& ber)
     {
-        std::array<uint8_t, 20> stream_segment;
+        std::array<uint8_t, 18> stream_segment;
         DecodeResult result = DecodeResult::OK;
 
         unpack_lich(buffer);
@@ -397,17 +397,12 @@ struct M17FrameDecoder
         for (auto c : tmp.lich) stream->push_back(c);
 
         std::copy(buffer.begin() + 96, buffer.end(), tmp.stream.begin());
-        auto dp = depunctured<328>(P2, tmp.stream);
+        auto dp = depunctured<296>(P2, tmp.stream);
         ber = viterbi_.decode(dp, output.stream);
-        ber = ber > 28 ? ber - 28 : 0;
         detail::to_frame(stream, output.stream);
         detail::to_bytes(output.packet, stream_segment);
 
-        crc_.reset();
-        for (auto c : stream_segment) crc_(c);
-        auto checksum = crc_.get();
-        INFO("crc = %04x", checksum);   // Otherwise ignored.
-        if ((checksum == 0) && (stream_segment[0] & 0x80))
+        if ((ber < 70) && (stream_segment[0] & 0x80))
         {
             INFO("EOS");
             state_ = State::LSF;

@@ -24,10 +24,8 @@ inline constexpr auto P1 = std::experimental::make_array<int8_t>(
 
 /// Puncture matrix for audio frames.
 inline constexpr auto P2 = std::experimental::make_array<int8_t>(
-    1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1,
-    0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1,
-    0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1);
+    1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 0);
 
 /// Puncture matrix for packet frames (7/8).
 inline constexpr auto P3 = std::experimental::make_array<int8_t>(

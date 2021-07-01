@@ -145,7 +145,6 @@ auto llr(FloatType sample)
 template <size_t M, typename T, size_t N, typename U, size_t IN>
 auto depunctured(std::array<T, N> puncture_matrix, std::array<U, IN> in)
 {
-    static_assert(M % N == 0);
     std::array<U, M> result;
     size_t index = 0;
     size_t pindex = 0;

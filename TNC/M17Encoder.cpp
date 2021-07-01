@@ -220,7 +220,7 @@ void M17Encoder::process_stream(tnc::hdlc::IoFrame* frame, FrameType type)
         }
         break;
     case State::ACTIVE:
-        if (frame->size() == 26)
+        if (frame->size() == 24)
         {
             send_stream(frame, type);   // Consumes frame.
         }
@@ -356,7 +356,7 @@ void M17Encoder::send_stream(tnc::hdlc::IoFrame* frame, FrameType)
     auto fit = std::copy(lich.begin(), lich.end(), m17_frame.begin());
 
     // Encode &  puncture
-    std::array<uint8_t, 20> data;
+    std::array<uint8_t, 18> data;
     std::copy(it, frame->end(), data.begin());
 
     if (data[0] & 0x80) state = State::IDLE; // EOS
