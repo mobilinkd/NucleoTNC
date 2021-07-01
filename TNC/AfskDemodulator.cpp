@@ -9,7 +9,11 @@ hdlc::IoFrame* Demodulator::operator()(q15_t* samples, size_t len)
 {
     hdlc::IoFrame* result = 0;
 
-    float* fa = audio_filter_(samples);
+    for (size_t i = 0; i != len; i++) {
+        audio_filter_input_buffer[i] = float(samples[i]);
+    }
+
+    float* fa = audio_filter_(audio_filter_input_buffer);
 
     for (size_t i = 0; i != len; i++) {
         buffer_[i] = int16_t(fa[i]);

@@ -24,7 +24,7 @@ void M17Demodulator::start()
     SysClock72();
     HAL_RCCEx_DisableLSCO();
 
-    demod_filter.init(m17::rrc_taps_f15.data());
+    demod_filter.init(m17::rrc_taps_f15);
     passall(kiss::settings().options & KISS_OPTION_PASSALL);
     polarity = kiss::settings().rx_rev_polarity() ? -1 : 1;
     audio::virtual_ground = (VREF + 1) / 2;
@@ -85,7 +85,14 @@ void M17Demodulator::dcd_off()
 
 void M17Demodulator::initialize(const q15_t* input)
 {
-	auto filtered = demod_filter(input, 1.f / 2560.f);
+
+    static constexpr float scale = 1.f / 2560.f;
+
+    for (size_t i = 0; i != ADC_BLOCK_SIZE; i++) {
+        demod_buffer[i] = float(input[i]) * scale;
+    }
+
+    auto filtered = demod_filter(demod_buffer.data());
     for (size_t i = 0; i != ADC_BLOCK_SIZE; ++i)
     {
 		auto filtered_sample = filtered[i];
@@ -306,7 +313,7 @@ void M17Demodulator::do_frame(float filtered_sample, hdlc::IoFrame*& frame_resul
 	float sample = filtered_sample - dev.offset();
 	sample *= idev;
 
-	auto n = llr<float, 4>(sample);
+	auto n = mobilinkd::llr<float, 4>(sample);
 	int8_t* tmp;
 	auto len = framer(n, &tmp);
 	if (len != 0)
@@ -388,7 +395,13 @@ hdlc::IoFrame* M17Demodulator::operator()(const q15_t* input)
     // Do adc_micro_adjustment() here?
     // adc_micro_adjustment();
 
-    auto filtered = demod_filter(input, 1.f / 2560.f);
+    static constexpr float scale = 1.f / 2560.f;
+
+    for (size_t i = 0; i != ADC_BLOCK_SIZE; i++) {
+        demod_buffer[i] = float(input[i]) * scale;
+    }
+
+    auto filtered = demod_filter(demod_buffer.data());
 //    getModulator().loopback(filtered);
 
     for (size_t i = 0; i != ADC_BLOCK_SIZE; ++i)

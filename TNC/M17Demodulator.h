@@ -52,6 +52,7 @@ struct M17Demodulator : IDemodulator
     enum class DemodState { UNLOCKED, LSF_SYNC, STREAM_SYNC, PACKET_SYNC, FRAME };
 
     audio_filter_t demod_filter;
+    std::array<float, ADC_BLOCK_SIZE> demod_buffer;
     m17::DataCarrierDetect<float, SAMPLE_RATE, 500> dcd{2500, 4000, 1.0, 10.0};
     m17::ClockRecovery<float, SAMPLE_RATE, SYMBOL_RATE> clock_recovery;
 

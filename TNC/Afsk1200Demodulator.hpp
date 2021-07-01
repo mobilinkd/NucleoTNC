@@ -68,9 +68,9 @@ struct Afsk1200Demodulator : IDemodulator
         // rx_twist is 6dB for discriminator input and 0db for de-emphasized input.
         auto twist = kiss::settings().rx_twist;
 
-        filter_1.init(*filter::fir::AfskFilters[twist + 3]);
-        filter_2.init(*filter::fir::AfskFilters[twist + 6]);
-        filter_3.init(*filter::fir::AfskFilters[twist + 9]);
+        filter_1.init(filter::fir::AfskFilters[twist + 3]->taps);
+        filter_2.init(filter::fir::AfskFilters[twist + 6]->taps);
+        filter_3.init(filter::fir::AfskFilters[twist + 9]->taps);
 
         last_fcs = 0;
         last_counter = 0;
