@@ -224,6 +224,12 @@ void M17Encoder::process_stream(tnc::hdlc::IoFrame* frame, FrameType type)
         {
             send_stream(frame, type);   // Consumes frame.
         }
+        else if (frame->size() == 26)
+        {
+            // Old-style frame with trailing CRC.
+            frame->resize(24);
+            send_stream(frame, type);
+        }
         else
         {
             WARN("Unexpected AUDIO frame size = %u", frame->size());

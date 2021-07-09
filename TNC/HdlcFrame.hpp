@@ -101,6 +101,7 @@ public:
     }
 
     uint16_t size() const {return data_.size();}
+    bool resize(uint16_t size) {return data_.resize(size);}
 
     uint16_t crc() const {return crc_;}
     uint16_t fcs() const {return fcs_;}
@@ -170,12 +171,10 @@ public:
             free_list_.pop_front();
         }
         taskEXIT_CRITICAL_FROM_ISR(x);
-        DEBUG("Acquired frame %p (size after = %d)", result, free_list_.size());
         return result;
     }
 
     void release(frame_type* frame) {
-        DEBUG("Released frame %p (size before = %d)", frame, free_list_.size());
         frame->clear();
         auto x = taskENTER_CRITICAL_FROM_ISR();
         free_list_.push_back(*frame);

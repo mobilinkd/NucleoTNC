@@ -81,6 +81,23 @@ struct SegmentedBuffer {
 
     uint16_t size() const {return size_;}
 
+    bool resize(uint16_t size)
+    {
+        if (size <= size_)
+        {
+            size_ = size;
+        }
+        else
+        {
+            for (;size_ != size;)
+            {
+                if (!push_back(value_type()))
+                    return false;
+            }
+        }
+        return true;
+    }
+
     bool push_back(value_type value) {
         uint16_t offset = size_ & 0xFF;
         if (offset == 0) { // Must allocate.
