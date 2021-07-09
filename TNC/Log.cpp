@@ -4,6 +4,9 @@
 #include <Log.h>
 #include "PortInterface.hpp"
 
+#include <cstdlib>
+#include <cstdio>
+
 void log_(int level, const char* fmt, ...)
 {
   if (level < mobilinkd::tnc::log().level_) return;
@@ -34,7 +37,7 @@ Log& log(void) {
 
 #endif
 
-#if 1
+#ifdef NUCLEOTNC
 void Log::log(Level level, const char* fmt, ...) {
 
     if (level < level_) return;
