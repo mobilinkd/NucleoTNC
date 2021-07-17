@@ -103,7 +103,7 @@ void startIOEventTask(void const*)
             {
                 ERROR("Timed out sending frame");
                 // The frame has been passed to the write() call.  It owns it now.
-                // hdlc::release(frame);
+                // Do not release here.
             }
         }
         else
