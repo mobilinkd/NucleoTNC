@@ -247,11 +247,11 @@ F 3 "" H 1500 1400 50  0001 C CNN
 	1    1500 1400
 	1    0    0    -1  
 $EndComp
-Text Label 1400 1000 0    39   ~ 0
+Text Label 1550 1000 0    39   ~ 0
 AUDIO_IN
-Text Label 1400 1100 0    39   ~ 0
+Text Label 3950 1100 0    39   ~ 0
 PTT
-Text Label 1400 1200 0    39   ~ 0
+Text Label 1850 1300 3    39   ~ 0
 AUDIO_OUT
 $Comp
 L Connector:AudioJack4 J1
@@ -267,12 +267,12 @@ $EndComp
 $Comp
 L Transistor_FET:2N7000 Q1
 U 1 1 5D03D2A2
-P 2550 1400
-F 0 "Q1" H 2756 1446 50  0000 L CNN
-F 1 "2N7000" H 2250 1250 50  0000 L CNN
-F 2 "Package_TO_SOT_THT:TO-92_Inline" H 2750 1325 50  0001 L CIN
-F 3 "https://www.fairchildsemi.com/datasheets/2N/2N7000.pdf" H 2550 1400 50  0001 L CNN
-	1    2550 1400
+P 2550 1750
+F 0 "Q1" H 2756 1796 50  0000 L CNN
+F 1 "2N7000" H 2250 1600 50  0000 L CNN
+F 2 "Package_TO_SOT_THT:TO-92_Inline" H 2750 1675 50  0001 L CIN
+F 3 "https://www.fairchildsemi.com/datasheets/2N/2N7000.pdf" H 2550 1750 50  0001 L CNN
+	1    2550 1750
 	-1   0    0    -1  
 $EndComp
 Wire Wire Line
@@ -1344,11 +1344,9 @@ Wire Wire Line
 Text Label 9350 4450 0    39   ~ 0
 LED_MISC
 Wire Wire Line
-	1300 1200 2000 1200
+	1300 1200 1850 1200
 Wire Wire Line
 	2450 1200 2300 1200
-Wire Wire Line
-	2450 1600 2450 1950
 $Comp
 L Mechanical:MountingHole_Pad H1
 U 1 1 5E255144
@@ -1456,4 +1454,27 @@ F 3 "" H 7750 4350 50  0001 C CNN
 	1    7750 4350
 	0    1    1    0   
 $EndComp
+$Comp
+L Diode:BAT85 D7
+U 1 1 60F3B25A
+P 2450 1400
+F 0 "D7" H 2550 1350 50  0000 C CNN
+F 1 "BAT85" H 2450 1525 50  0000 C CNN
+F 2 "Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal" H 2450 1225 50  0001 C CNN
+F 3 "https://assets.nexperia.com/documents/data-sheet/BAT85.pdf" H 2450 1400 50  0001 C CNN
+	1    2450 1400
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	2450 1200 2450 1250
+Wire Wire Line
+	2750 1750 2750 1400
+Connection ~ 1850 1200
+Wire Wire Line
+	1850 1200 2000 1200
+Wire Wire Line
+	3600 1100 4100 1100
+Connection ~ 3600 1100
+Wire Wire Line
+	1850 1200 1850 1700
 $EndSCHEMATC
