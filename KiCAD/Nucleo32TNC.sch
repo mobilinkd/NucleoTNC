@@ -85,7 +85,7 @@ U 1 1 5D03DD0B
 P 3700 1300
 F 0 "Q2" H 3906 1346 50  0000 L CNN
 F 1 "2N7000" H 3400 1150 50  0000 L CNN
-F 2 "Package_TO_SOT_THT:TO-92_Inline" H 3900 1225 50  0001 L CIN
+F 2 "Package_TO_SOT_THT:TO-92_Inline_Wide" H 3900 1225 50  0001 L CIN
 F 3 "https://www.fairchildsemi.com/datasheets/2N/2N7000.pdf" H 3700 1300 50  0001 L CNN
 	1    3700 1300
 	-1   0    0    -1  
@@ -270,7 +270,7 @@ U 1 1 5D03D2A2
 P 2550 1750
 F 0 "Q1" H 2756 1796 50  0000 L CNN
 F 1 "2N7000" H 2250 1600 50  0000 L CNN
-F 2 "Package_TO_SOT_THT:TO-92_Inline" H 2750 1675 50  0001 L CIN
+F 2 "Package_TO_SOT_THT:TO-92_Inline_Wide" H 2750 1675 50  0001 L CIN
 F 3 "https://www.fairchildsemi.com/datasheets/2N/2N7000.pdf" H 2550 1750 50  0001 L CNN
 	1    2550 1750
 	-1   0    0    -1  
