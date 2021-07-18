@@ -5,8 +5,8 @@ $Descr USLetter 11000 8500
 encoding utf-8
 Sheet 1 1
 Title "NucleoTNC PCB"
-Date "2020-05-06"
-Rev "B"
+Date "2021-07-17"
+Rev "C"
 Comp "Mobilinkd TNC"
 Comment1 "Based on Nucleo32 Breadboard TNC Project"
 Comment2 "STM32L432 Nucleo32 Board"
