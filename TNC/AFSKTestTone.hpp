@@ -1,8 +1,7 @@
-// Copyright 2016 Rob Riggs <rob@mobilinkd.com>
+// Copyright 2016-2021 Rob Riggs <rob@mobilinkd.com>
 // All rights reserved.
 
-#ifndef MOBILINKD__TNC__AFSK_TEST_TONE_HPP_
-#define MOBILINKD__TNC__AFSK_TEST_TONE_HPP_
+#pragma once
 
 #include "cmsis_os.h"
 
@@ -27,6 +26,3 @@ struct AFSKTestTone
 };
 
 }} // mobilinkd::tnc
-
-
-#endif // MOBILINKD__TNC__AFSK_TEST_TONE_HPP_

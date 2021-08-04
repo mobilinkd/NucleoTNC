@@ -1,8 +1,7 @@
-// Copyright 2016 Rob Riggs <rob@mobilinkd.com>
+// Copyright 2016-2021 Rob Riggs <rob@mobilinkd.com>
 // All rights reserved.
 
-#ifndef MOBILINKD__TNC__NULL_PORT_HPP_
-#define MOBILINKD__TNC__NULL_PORT_HPP_
+#pragma once
 
 #include "PortInterface.hpp"
 
@@ -52,5 +51,3 @@ struct NullPort : PortInterface
 NullPort* getNullPort();
 
 }} // mobilinkd::tnc
-
-#endif // MOBILINKD__TNC__NULL_PORT_HPP_

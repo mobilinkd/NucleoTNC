@@ -1,8 +1,7 @@
-// Copyright 2015 Rob Riggs <rob@mobilinkd.com>
+// Copyright 2015-2021 Rob Riggs <rob@mobilinkd.com>
 // All rights reserved.
 
-#ifndef MOBILINKD__TNC__AUDIO__AUDIO_LEVEL_H_
-#define MOBILINKD__TNC__AUDIO__AUDIO_LEVEL_H_
+#pragma once
 
 #include "arm_math.h"
 #include "cmsis_os.h"
@@ -29,9 +28,7 @@ void setAudioOutputLevel();
 
 extern bool streamInputDCOffset;
 constexpr const uint16_t vref = 4095; // Must match ADC output (adjust when oversampling)
-extern uint16_t virtual_ground;
+extern int16_t virtual_ground;
 extern float i_vgnd;
 
 }}} // mobilinkd::tnc::audio
-
-#endif // MOBILINKD__TNC__AUDIO__AUDIO_LEVEL_H_

@@ -1,4 +1,4 @@
-// Copyright 2015 Mobilinkd LLC <rob@mobilinkd.com>
+// Copyright 2015-2021 Mobilinkd LLC <rob@mobilinkd.com>
 // All rights reserved.
 
 #include "HdlcFrame.hpp"

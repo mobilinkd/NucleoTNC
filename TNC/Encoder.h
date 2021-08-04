@@ -1,7 +1,9 @@
-// Copyright 2015-2020 Mobilinkd LLC <rob@mobilinkd.com>
+// Copyright 2015-2021 Mobilinkd LLC <rob@mobilinkd.com>
 // All rights reserved.
 
 #pragma once
+
+#include "HdlcFrame.hpp"
 
 namespace mobilinkd
 {
@@ -24,6 +26,7 @@ struct Encoder
     virtual void updateModulator() = 0;
     virtual void stop() = 0;
     virtual EncoderType encoder_type() const = 0;
+    virtual tnc::hdlc::IoFrame* create_bert_frame() { return nullptr; };
 };
 
 } // mobilinkd

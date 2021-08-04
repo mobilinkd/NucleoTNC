@@ -28,14 +28,12 @@ void log_(int level, const char *fmt, ...) __attribute__((format(printf, 2, 3)))
 
 #define LOG(level, ...) if(level >= KISS_LOG_LEVEL) log_(level, __VA_ARGS__);
 
-#define DEBUG(...)    LOG(0, __VA_ARGS__)
 #define TNC_DEBUG(...)    LOG(0, __VA_ARGS__)
 #define INFO(...)     LOG(1, __VA_ARGS__)
 #define WARN(...)     LOG(2, __VA_ARGS__)
 #define ERROR(...)    LOG(3, __VA_ARGS__)
 #define SEVERE(...)   LOG(4, __VA_ARGS__)
 #else
-#define DEBUG(...)
 #define TNC_DEBUG(...)
 #define INFO(...)
 #define WARN(...)

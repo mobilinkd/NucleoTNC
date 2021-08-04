@@ -14,7 +14,7 @@
 
 #include <stdint.h>
 
-extern TIM_HandleTypeDef htim1;
+extern TIM_HandleTypeDef LED_PWM_TIMER_HANDLE;
 
 namespace mobilinkd {
 namespace tnc {
@@ -421,7 +421,7 @@ struct Flash
             if (counter == 0)
             {
                 state = STATE::OFF;
-                HAL_TIM_PWM_Stop(&htim1, channel);
+                HAL_TIM_PWM_Stop(&LED_PWM_TIMER_HANDLE, channel);
             }
             else
             {
@@ -451,7 +451,7 @@ struct Flash
         auto expected = STATE::OFF;
         if (gr_state.compare_exchange_strong(expected, STATE::RAMP_UP))
         {
-            HAL_TIM_PWM_Start(&htim1, GREEN_CHANNEL);
+            HAL_TIM_PWM_Start(&LED_PWM_TIMER_HANDLE, GREEN_CHANNEL);
         }
         else
         {
@@ -473,7 +473,7 @@ struct Flash
         if (rd_state.compare_exchange_strong(expected, STATE::RAMP_UP))
         {
             // PWM Channel must match
-            HAL_TIM_PWM_Start(&htim1, RED_CHANNEL);
+            HAL_TIM_PWM_Start(&LED_PWM_TIMER_HANDLE, RED_CHANNEL);
         }
         else
         {
@@ -492,19 +492,19 @@ struct Flash
     void disconnect()
     {
         blue_func = noConnection;
-        HAL_TIM_PWM_Start(&htim1, BLUE_CHANNEL);
+        HAL_TIM_PWM_Start(&LED_PWM_TIMER_HANDLE, BLUE_CHANNEL);
     }
 
     void usb()
     {
         blue_func = usbConnection;
-        HAL_TIM_PWM_Start(&htim1, BLUE_CHANNEL);
+        HAL_TIM_PWM_Start(&LED_PWM_TIMER_HANDLE, BLUE_CHANNEL);
     }
 
     void bt()
     {
         blue_func = btConnection;
-        HAL_TIM_PWM_Start(&htim1, BLUE_CHANNEL);
+        HAL_TIM_PWM_Start(&LED_PWM_TIMER_HANDLE, BLUE_CHANNEL);
     }
 };
 
@@ -518,25 +518,25 @@ Flash& flash()
 }
 } // mobilinkd::tnc
 
-void HTIM1_PeriodElapsedCallback()
+void LED_TIMER_PeriodElapsedCallback()
 {
     using mobilinkd::tnc::flash;
 
     // CCR registers must match the TIM_CHANNEL used for each LED in Flash.
 #ifndef NUCLEOTNC
-    htim1.Instance->CCR1 = flash().blue();
-    htim1.Instance->CCR2 = flash().green();
-    htim1.Instance->CCR3 = flash().red();
+    LED_PWM_TIMER_HANDLE.Instance->CCR1 = flash().blue();
+    LED_PWM_TIMER_HANDLE.Instance->CCR2 = flash().green();
+    LED_PWM_TIMER_HANDLE.Instance->CCR3 = flash().red();
 #else
-    htim1.Instance->CCR1 = flash().red();
-    htim1.Instance->CCR2 = flash().green();
-    htim1.Instance->CCR3 = flash().blue(); // YELLOW
+    LED_PWM_TIMER_HANDLE.Instance->CCR1 = flash().red();
+    LED_PWM_TIMER_HANDLE.Instance->CCR2 = flash().green();
+    LED_PWM_TIMER_HANDLE.Instance->CCR3 = flash().blue(); // YELLOW
 #endif
 }
 
 void indicate_turning_on(void)
 {
-    HAL_TIM_Base_Start_IT(&htim1);
+    HAL_TIM_Base_Start_IT(&LED_PWM_TIMER_HANDLE);
     tx_on();
     rx_on();
 }

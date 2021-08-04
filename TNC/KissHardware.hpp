@@ -6,6 +6,7 @@
 #include "Log.h"
 #include "HdlcFrame.hpp"
 #include "AFSKTestTone.hpp"
+#include "main.h"
 
 #include <cstdint>
 #include <cstring>
@@ -329,44 +330,44 @@ struct Hardware
       memset(beacons, 0, sizeof(beacons));
       update_crc();
 
-      DEBUG("Settings initialized");
+      TNC_DEBUG("Settings initialized");
     }
 
     void debug() {
 #ifdef KISS_LOGGING
-        DEBUG("Hardware Settings (size=%d):", sizeof(Hardware));
-        DEBUG("TX Delay: %d", (int)txdelay);
-        DEBUG("P* Persistence: %d", (int)ppersist);
-        DEBUG("Slot Time: %d", (int)slot);
-        DEBUG("TX Tail: %d", (int)txtail);
-        DEBUG("Duplex: %d", (int)duplex);
-        DEBUG("Modem Type: %s", modem_type_lookup[modem_type]);
-        DEBUG("TX Gain: %d", (int)output_gain);
-        DEBUG("RX Gain: %d", (int)input_gain);
-        DEBUG("TX Twist: %d", (int)tx_twist);
-        DEBUG("RX Twist: %d", (int)rx_twist);
-        DEBUG("Log Level: %d", (int)log_level);
-        DEBUG("Options:  %04hx", options);
-        DEBUG("MYCALL: %s", mycall.data());
-        DEBUG("Dedupe time (secs): %d", (int)dedupe_seconds);
-        DEBUG("Aliases:");
+        TNC_DEBUG("Hardware Settings (size=%d):", sizeof(Hardware));
+        TNC_DEBUG("TX Delay: %d", (int)txdelay);
+        TNC_DEBUG("P* Persistence: %d", (int)ppersist);
+        TNC_DEBUG("Slot Time: %d", (int)slot);
+        TNC_DEBUG("TX Tail: %d", (int)txtail);
+        TNC_DEBUG("Duplex: %d", (int)duplex);
+        TNC_DEBUG("Modem Type: %s", modem_type_lookup[modem_type]);
+        TNC_DEBUG("TX Gain: %d", (int)output_gain);
+        TNC_DEBUG("RX Gain: %d", (int)input_gain);
+        TNC_DEBUG("TX Twist: %d", (int)tx_twist);
+        TNC_DEBUG("RX Twist: %d", (int)rx_twist);
+        TNC_DEBUG("Log Level: %d", (int)log_level);
+        TNC_DEBUG("Options:  %04hx", options);
+        TNC_DEBUG("MYCALL: %s", mycall.data());
+        TNC_DEBUG("Dedupe time (secs): %d", (int)dedupe_seconds);
+        TNC_DEBUG("Aliases:");
         for (auto& a : aliases) {
             if (!a.set) continue;
-            DEBUG(" call: %s", a.call.data());
-            DEBUG(" use: %d", (int)a.use);
-            DEBUG(" insert: %d", (int)a.insert_id);
-            DEBUG(" preempt: %d", (int)a.preempt);
-            DEBUG(" hops: %d", (int)a.hops);
+            TNC_DEBUG(" call: %s", a.call.data());
+            TNC_DEBUG(" use: %d", (int)a.use);
+            TNC_DEBUG(" insert: %d", (int)a.insert_id);
+            TNC_DEBUG(" preempt: %d", (int)a.preempt);
+            TNC_DEBUG(" hops: %d", (int)a.hops);
         }
-        DEBUG("Beacons:");
+        TNC_DEBUG("Beacons:");
         for (auto& b : this->beacons) {
             if (b.seconds == 0) continue;
-            DEBUG(" dest: %s", b.dest.data());
-            DEBUG(" path: %s", (char*)b.path);
-            DEBUG(" text: %s", (char*)b.text);
-            DEBUG(" frequency (secs): %d", (int)b.seconds);
+            TNC_DEBUG(" dest: %s", b.dest.data());
+            TNC_DEBUG(" path: %s", (char*)b.path);
+            TNC_DEBUG(" text: %s", (char*)b.text);
+            TNC_DEBUG(" frequency (secs): %d", (int)b.seconds);
         }
-        DEBUG("Checksum: %04hx", checksum);
+        TNC_DEBUG("Checksum: %04hx", checksum);
 #endif
     }
 

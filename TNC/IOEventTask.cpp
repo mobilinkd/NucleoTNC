@@ -76,7 +76,7 @@ void startIOEventTask(void const*)
                     mobilinkd::tnc::audio::DEMODULATOR, osWaitForever);
                 break;
             case CMD_USER_BUTTON_UP:
-                DEBUG("Button Up");
+                TNC_DEBUG("Button Up");
                 break;
             case CMD_SET_PTT_SIMPLEX:
                 getModulator().set_ptt(&simplexPtt);
@@ -97,7 +97,7 @@ void startIOEventTask(void const*)
 
         if (frame->source() & IoFrame::RF_DATA)
         {
-            DEBUG("RF frame");
+            TNC_DEBUG("RF frame");
             frame->source(frame->source() & 0x70);
             if (!ioport->write(frame, frame->size() + 100))
             {
@@ -108,7 +108,7 @@ void startIOEventTask(void const*)
         }
         else
         {
-            DEBUG("Serial frame");
+            TNC_DEBUG("Serial frame");
             if ((frame->type() & 0x0F) == IoFrame::DATA)
             {
                 kiss::getAFSKTestTone().stop();

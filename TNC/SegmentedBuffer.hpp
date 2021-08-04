@@ -1,8 +1,7 @@
-// Copyright 2015 Mobilinkd LLC <rob@mobilinkd.com>
+// Copyright 2015-2021 Mobilinkd LLC <rob@mobilinkd.com>
 // All rights reserved.
 
-#ifndef MOBILINKD__SEGMENTED_BUFFER_HPP_
-#define MOBILINKD__SEGMENTED_BUFFER_HPP_
+#pragma once
 
 #include "memory.hpp"
 
@@ -157,5 +156,3 @@ struct SegmentedBufferIterator : public boost::iterator_facade<
 };
 
 }}} // mobilinkd::tnc::buffer
-
-#endif // MOBILINKD__SEGMENTED_BUFFER_HPP_

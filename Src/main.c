@@ -72,6 +72,8 @@ DMA_HandleTypeDef hdma_i2c3_tx;
 
 OPAMP_HandleTypeDef hopamp1;
 
+IWDG_HandleTypeDef hiwdg;
+
 RNG_HandleTypeDef hrng;
 
 RTC_HandleTypeDef hrtc;
@@ -145,6 +147,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_I2C3_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_RNG_Init(void);
+static void MX_IWDG_Init(void);
 void startDefaultTask(void const * argument);
 extern void startIOEventTask(void const * argument);
 extern void startAudioInputTask(void const * argument);
@@ -633,6 +636,21 @@ static void MX_I2C3_Init(void)
     /**I2C Fast mode Plus enable 
     */
   HAL_I2CEx_EnableFastModePlus(I2C_FASTMODEPLUS_I2C3);
+
+}
+
+/* IWDG init function */
+static void MX_IWDG_Init(void)
+{
+
+  hiwdg.Instance = IWDG;
+  hiwdg.Init.Prescaler = IWDG_PRESCALER_16;
+  hiwdg.Init.Window = 4095;
+  hiwdg.Init.Reload = 4095;
+  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
 
 }
 
@@ -1239,7 +1257,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   }
   /* USER CODE BEGIN Callback 1 */
   if (htim->Instance == TIM1) {
-      HTIM1_PeriodElapsedCallback();
+      LED_TIMER_PeriodElapsedCallback();
   }
 
   /* USER CODE END Callback 1 */

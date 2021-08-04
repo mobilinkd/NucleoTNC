@@ -1,8 +1,7 @@
-// Copyright 2016 Rob Riggs <rob@mobilinkd.com>
+// Copyright 2016-2021 Rob Riggs <rob@mobilinkd.com>
 // All rights reserved.
 
-#ifndef MOBILINKD__TNC__SERIAL_PORT_HPP_
-#define MOBILINKD__TNC__SERIAL_PORT_HPP_
+#pragma once
 
 #include "PortInterface.hpp"
 
@@ -38,5 +37,3 @@ private:
 SerialPort* getSerialPort();
 
 }} // mobilinkd::tnc
-
-#endif // MOBILINKD__TNC__SERIAL_PORT_HPP_

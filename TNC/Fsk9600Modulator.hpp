@@ -5,9 +5,13 @@
 
 #include "Modulator.hpp"
 
+#include "stm32l4xx_hal.h"
+
 #include <array>
 #include <algorithm>
 #include <cstdint>
+
+extern IWDG_HandleTypeDef hiwdg;
 
 namespace mobilinkd { namespace tnc {
 
@@ -86,7 +90,7 @@ struct Fsk9600Modulator : Modulator
         case State::STOPPING:
         case State::STOPPED:
             ptt_->on();
-#if defined(KISS_LOGGING) && !defined(NUCLEOTNC)
+#if defined(KISS_LOGGING) && defined(HAVE_LSCO)
                 HAL_RCCEx_DisableLSCO();
 #endif
 
@@ -103,6 +107,8 @@ struct Fsk9600Modulator : Modulator
             break;
         }
     }
+
+    void tone(uint16_t freq) override {}
 
     // DAC DMA interrupt functions.
 
@@ -128,6 +134,8 @@ struct Fsk9600Modulator : Modulator
 
     void empty()
     {
+        HAL_IWDG_Refresh(&hiwdg);
+
         switch (state)
         {
         case State::STARTING:
@@ -140,7 +148,7 @@ struct Fsk9600Modulator : Modulator
             stop_conversion();
             ptt_->off();
             level = Level::HIGH;
-#if defined(KISS_LOGGING) && !defined(NUCLEOTNC)
+#if defined(KISS_LOGGING) && defined(HAVE_LSCO)
                 HAL_RCCEx_EnableLSCO(RCC_LSCOSOURCE_LSE);
 #endif
             break;
@@ -155,7 +163,7 @@ struct Fsk9600Modulator : Modulator
         stop_conversion();
         ptt_->off();
         level = Level::HIGH;
-#if defined(KISS_LOGGING) && !defined(NUCLEOTNC)
+#if defined(KISS_LOGGING) && defined(HAVE_LSCO)
             HAL_RCCEx_EnableLSCO(RCC_LSCOSOURCE_LSE);
 #endif
         // Drain the queue.
@@ -204,6 +212,7 @@ private:
 
     void fill(uint16_t* buffer, bool bit)
     {
+        HAL_IWDG_Refresh(&hiwdg);
         switch (level)
         {
         case Level::HIGH:

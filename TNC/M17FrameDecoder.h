@@ -40,6 +40,12 @@ tnc::hdlc::IoFrame* to_frame(std::array<T, N> in)
         }
     }
 
+    if (b) // Not a full byte boundary.
+    {
+        while (b++ != 8) out <<= 1;
+        frame->push_back(out);
+    }
+
     return frame;
 }
 
@@ -153,8 +159,8 @@ struct M17FrameDecoder
     CRC16<0x5935, 0xFFFF> crc_;
 
 
-    enum class State {LSF, STREAM, BASIC_PACKET, FULL_PACKET};
-    enum class SyncWordType { LSF, STREAM, PACKET, RESERVED };
+    enum class State {LSF, STREAM, BASIC_PACKET, FULL_PACKET, BERT};
+    enum class SyncWordType { LSF, STREAM, PACKET, BERT };
     enum class DecodeResult { FAIL, OK, EOS, INCOMPLETE };
 
     State state_ = State::LSF;
@@ -164,6 +170,8 @@ struct M17FrameDecoder
     using lsf_conv_buffer_t = std::array<uint8_t, 46>;
     using lsf_buffer_t = std::array<uint8_t, 30>;
 
+    using bert_buffer_t = std::array<uint8_t, 25>;
+
     using audio_conv_buffer_t = std::array<uint8_t, 34>;
     using audio_buffer_t = std::array<uint8_t, 18>;
 
@@ -172,18 +180,21 @@ struct M17FrameDecoder
     
     link_setup_callback_t link_setup_callback_;
     audio_callback_t audio_callback_;
+
     union
     {
         std::array<uint8_t, 30> lich;
         std::array<uint8_t, 240> lsf;
         std::array<uint8_t, 206> packet;
         std::array<uint8_t, 144> stream;
+        std::array<uint8_t, 197> bert;
     } output;
 
     union {
         std::array<int8_t, 488> lsf;
         std::array<int8_t, 420> packet;
         std::array<int8_t, 272> stream;
+        std::array<int8_t, 402> bert;
         std::array<uint8_t, 6> lich;
     } tmp;
 
@@ -290,7 +301,7 @@ struct M17FrameDecoder
                 for (auto c : current_lsf) lsf->push_back(c);
                 lsf->push_back(0);
                 lsf->push_back(0);
-                lsf->source(0x20);
+                lsf->source(tnc::hdlc::IoFrame::STREAM);
                 return DecodeResult::OK;
             }
             lsf = nullptr;
@@ -364,13 +375,13 @@ struct M17FrameDecoder
         INFO("LICH crc = %04x", checksum);
         if (checksum == 0)
         {
-        	lich_segments = 0;
+            lich_segments = 0;
             state_ = State::STREAM;
             lsf = tnc::hdlc::acquire_wait();
             for (auto c : output.lich) lsf->push_back(c);
             lsf->push_back(0);
             lsf->push_back(0);
-            lsf->source(0x20);
+            lsf->source(tnc::hdlc::IoFrame::STREAM);
             ber = 0;
             dump(output.lich);
             return DecodeResult::OK;
@@ -383,6 +394,18 @@ struct M17FrameDecoder
         output.lich.fill(0);
         ber = 128;
         return DecodeResult::INCOMPLETE;
+    }
+
+    [[gnu::noinline]]
+    DecodeResult decode_bert(buffer_t& buffer, tnc::hdlc::IoFrame*& bert, int& ber)
+    {
+        depuncture(buffer, tmp.bert, P2);
+        ber = viterbi_.decode(tmp.bert, output.bert);
+        bert = detail::to_frame(output.bert);
+        bert->push_back(0);
+        bert->push_back(0);
+        bert->source(tnc::hdlc::IoFrame::BERT);
+        return DecodeResult::OK;
     }
 
     [[gnu::noinline]]
@@ -410,7 +433,7 @@ struct M17FrameDecoder
         }
         stream->push_back(0);
         stream->push_back(0);
-        stream->source(0x20);
+        stream->source(tnc::hdlc::IoFrame::STREAM);
         return result;
     }
 
@@ -524,7 +547,7 @@ struct M17FrameDecoder
             }
             current_packet->push_back(0);
             current_packet->push_back(0);
-            current_packet->source(0x10);
+            current_packet->source(tnc::hdlc::IoFrame::PACKET);
             packet = current_packet;
             current_packet = nullptr;
             packet_frame_counter = 0;
@@ -618,9 +641,9 @@ struct M17FrameDecoder
                 state_ = State::LSF;
             }
             break;
-        case SyncWordType::RESERVED:
-            state_ = State::LSF;
-            break;
+        case SyncWordType::BERT:
+            state_ = State::BERT;
+            return decode_bert(buffer, result, ber);
         }
 
         return DecodeResult::FAIL;

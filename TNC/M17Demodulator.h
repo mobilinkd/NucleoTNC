@@ -49,7 +49,7 @@ struct M17Demodulator : IDemodulator
     using audio_filter_t = FirFilter<ADC_BLOCK_SIZE, m17::FILTER_TAP_NUM_15>;
     using sync_word_t = m17::SyncWord<m17::Correlator>;
 
-    enum class DemodState { UNLOCKED, LSF_SYNC, STREAM_SYNC, PACKET_SYNC, FRAME };
+    enum class DemodState { UNLOCKED, LSF_SYNC, STREAM_SYNC, PACKET_SYNC, BERT_SYNC, FRAME };
 
     audio_filter_t demod_filter;
     std::array<float, ADC_BLOCK_SIZE> demod_buffer;
@@ -59,7 +59,7 @@ struct M17Demodulator : IDemodulator
     m17::Correlator correlator;
     sync_word_t preamble_sync{{+3,-3,+3,-3,+3,-3,+3,-3}, 29.f};
     sync_word_t lsf_sync{{+3,+3,+3,+3,-3,-3,+3,-3}, 31.f, -31.f};
-    sync_word_t packet_sync{{3,-3,3,3,-3,-3,-3,-3}, 32.f};
+    sync_word_t packet_sync{{3,-3,3,3,-3,-3,-3,-3}, 31.f, -31.f};
 
     m17::FreqDevEstimator<float> dev;
 
@@ -97,6 +97,7 @@ struct M17Demodulator : IDemodulator
     void do_lsf_sync();
     void do_packet_sync();
     void do_stream_sync();
+    void do_bert_sync();
     void do_frame(float filtered_sample, hdlc::IoFrame*& frame_result);
 
     void stop() override
@@ -139,7 +140,7 @@ struct M17Demodulator : IDemodulator
     uint32_t readBatteryLevel() override
     {
 #ifndef NUCLEOTNC
-        DEBUG("enter M17Demodulator::readBatteryLevel");
+        TNC_DEBUG("enter M17Demodulator::readBatteryLevel");
 
         ADC_ChannelConfTypeDef sConfig;
 
@@ -170,21 +171,21 @@ struct M17Demodulator : IDemodulator
         gpio::BAT_DIVIDER::off();
         HAL_Delay(1);
 
-        sConfig.Channel = ADC_CHANNEL_15;
-        if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+        sConfig.Channel = BATTERY_ADC_CHANNEL;
+        if (HAL_ADC_ConfigChannel(&BATTERY_ADC_HANDLE, &sConfig) != HAL_OK)
             CxxErrorHandler();
 
         uint32_t vbat = 0;
-        if (HAL_ADC_Start(&hadc1) != HAL_OK) CxxErrorHandler();
+        if (HAL_ADC_Start(&BATTERY_ADC_HANDLE) != HAL_OK) CxxErrorHandler();
         for (size_t i = 0; i != 8; ++i)
         {
-            if (HAL_ADC_PollForConversion(&hadc1, 1) != HAL_OK) CxxErrorHandler();
-            vbat += HAL_ADC_GetValue(&hadc1);
+            if (HAL_ADC_PollForConversion(&BATTERY_ADC_HANDLE, 1) != HAL_OK) CxxErrorHandler();
+            vbat += HAL_ADC_GetValue(&BATTERY_ADC_HANDLE);
         }
 
         vbat /= 8;
 
-        if (HAL_ADC_Stop(&hadc1) != HAL_OK) CxxErrorHandler();
+        if (HAL_ADC_Stop(&BATTERY_ADC_HANDLE) != HAL_OK) CxxErrorHandler();
         if (HAL_TIM_Base_Stop(&htim6) != HAL_OK)
             CxxErrorHandler();
 
@@ -205,7 +206,7 @@ struct M17Demodulator : IDemodulator
         INFO("Vref = %lumV", vref)
         INFO("Vbat = %lumV", vbat);
 
-        DEBUG("exit M17Demodulator::readBatteryLevel");
+        TNC_DEBUG("exit M17Demodulator::readBatteryLevel");
         return vbat;
 #else
         return 0;

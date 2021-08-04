@@ -1,8 +1,7 @@
-// Copyright 2015 Mobilinkd LLC <rob@mobilinkd.com>
+// Copyright 2015-2021 Mobilinkd LLC <rob@mobilinkd.com>
 // All rights reserved.
 
-#ifndef MOBILINKD__MEMORY_HPP_
-#define MOBILINKD__MEMORY_HPP_
+#pragma once
 
 #include "cmsis_os.h"
 
@@ -66,9 +65,9 @@ struct Pool {
         free_list.push_back(*item);
         taskEXIT_CRITICAL_FROM_ISR(x);
     }
+
+    size_t free() const { return free_list.size(); }
 };
 
 
 }}} // mobilinkd::tnc::memory
-
-#endif // MOBILINKD__MEMORY_HPP_

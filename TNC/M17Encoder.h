@@ -1,4 +1,4 @@
-// Copyright 2015-2020 Mobilinkd LLC <rob@mobilinkd.com>
+// Copyright 2015-2021 Mobilinkd LLC <rob@mobilinkd.com>
 // All rights reserved.
 
 #pragma once
@@ -64,6 +64,7 @@ struct M17Encoder : public Encoder
     static const std::array<uint8_t, 2> LSF_SYNC;
     static const std::array<uint8_t, 2> STREAM_SYNC;
     static const std::array<uint8_t, 2> PACKET_SYNC;
+    static const std::array<uint8_t, 2> BERT_SYNC;
 
     enum class State {INACTIVE, IDLE, ACTIVE};
     enum class FrameType {BASIC_PACKET, FULL_PACKET, VOICE_STREAM};
@@ -75,6 +76,8 @@ struct M17Encoder : public Encoder
     void updateModulator() override;
     void stop() override;
     EncoderType encoder_type() const override { return EncoderType::M17; }
+    tnc::hdlc::IoFrame* create_bert_frame() override;
+
 
 private:
 
@@ -123,7 +126,9 @@ private:
     /**
      * Convolutional encode N bytes of data, returning N*2 + 1 bytes
      * of encoded data (4 zero flush bits are added).  If total bits
-     * are not an even byte boundary, the
+     * are not an even byte boundary, the high bits of the last byte
+     * are used.
+     *
      * @param data
      * @param total_bits
      * @return

@@ -19,7 +19,7 @@ void tx_off(void);
 void rx_on(void);
 void rx_off(void);
 
-void HTIM1_PeriodElapsedCallback(void);
+void LED_TIMER_PeriodElapsedCallback(void);
 
 #ifdef __cplusplus
 }

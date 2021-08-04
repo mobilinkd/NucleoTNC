@@ -85,7 +85,7 @@ hdlc::IoFrame* Afsk1200Demodulator::operator()(const q15_t* samples)
  */
 float Afsk1200Demodulator::readTwist()
 {
-    DEBUG("enter Afsk1200Demodulator::readTwist");
+    TNC_DEBUG("enter Afsk1200Demodulator::readTwist");
 
     float g1200 = 0.0f;
     float g2200 = 0.0f;
@@ -133,14 +133,14 @@ float Afsk1200Demodulator::readTwist()
     INFO("Twist = %d / 100 (%d - %d)", int(result * 100), int(g1200),
         int(g2200));
 
-    DEBUG("exit readTwist");
+    TNC_DEBUG("exit readTwist");
     return result;
 }
 
 uint32_t Afsk1200Demodulator::readBatteryLevel()
 {
 #ifndef NUCLEOTNC
-    DEBUG("enter Afsk1200Demodulator::readBatteryLevel");
+    TNC_DEBUG("enter Afsk1200Demodulator::readBatteryLevel");
 
     ADC_ChannelConfTypeDef sConfig;
 
@@ -171,21 +171,21 @@ uint32_t Afsk1200Demodulator::readBatteryLevel()
     gpio::BAT_DIVIDER::off();
     HAL_Delay(1);
 
-    sConfig.Channel = ADC_CHANNEL_15;
-    if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+    sConfig.Channel = BATTERY_ADC_CHANNEL;
+    if (HAL_ADC_ConfigChannel(&BATTERY_ADC_HANDLE, &sConfig) != HAL_OK)
         CxxErrorHandler();
 
     uint32_t vbat = 0;
-    if (HAL_ADC_Start(&hadc1) != HAL_OK) CxxErrorHandler();
+    if (HAL_ADC_Start(&BATTERY_ADC_HANDLE) != HAL_OK) CxxErrorHandler();
     for (size_t i = 0; i != 8; ++i)
     {
-        if (HAL_ADC_PollForConversion(&hadc1, 1) != HAL_OK) CxxErrorHandler();
-        vbat += HAL_ADC_GetValue(&hadc1);
+        if (HAL_ADC_PollForConversion(&BATTERY_ADC_HANDLE, 1) != HAL_OK) CxxErrorHandler();
+        vbat += HAL_ADC_GetValue(&BATTERY_ADC_HANDLE);
     }
 
     vbat /= 8;
 
-    if (HAL_ADC_Stop(&hadc1) != HAL_OK) CxxErrorHandler();
+    if (HAL_ADC_Stop(&BATTERY_ADC_HANDLE) != HAL_OK) CxxErrorHandler();
     if (HAL_TIM_Base_Stop(&htim6) != HAL_OK)
         CxxErrorHandler();
 
@@ -206,7 +206,7 @@ uint32_t Afsk1200Demodulator::readBatteryLevel()
     INFO("Vref = %lumV", vref);
     INFO("Vbat = %lumV", vbat);
 
-    DEBUG("exit Afsk1200Demodulator::readBatteryLevel");
+    TNC_DEBUG("exit Afsk1200Demodulator::readBatteryLevel");
     return vbat;
 #else
     return 0;

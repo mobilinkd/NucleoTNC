@@ -1,9 +1,7 @@
-// Copyright 2015-2019 Mobilinkd LLC <rob@mobilinkd.com>
+// Copyright 2015-2021 Mobilinkd LLC <rob@mobilinkd.com>
 // All rights reserved.
 
-
-#ifndef MOBILINKD__HDLC_FRAME_HPP_
-#define MOBILINKD__HDLC_FRAME_HPP_
+#pragma once
 
 #ifndef EXCLUDE_CRC
 #include "stm32l4xx_hal.h"
@@ -39,7 +37,7 @@ public:
         DATA = 0, TX_DELAY, P_PERSIST, SLOT_TIME, TX_TAIL, DUPLEX, HARDWARE,
         TEXT, LOG};
 
-    enum Source { RF_DATA = 0x80 };
+    enum Source { RF_DATA = 0x80, BERT = 0x30, STREAM = 0x20, PACKET = 0x10 };
 
 private:
     data_type data_;
@@ -70,7 +68,7 @@ private:
         checksum <<= 16;     // Shift
         asm volatile("rbit %0, %0" : "+r" (checksum)); // Reverse
         uint16_t result = checksum & 0xFFFF;
-        DEBUG("CRC = %hx", result);
+        TNC_DEBUG("CRC = %hx", result);
         return result;
     }
 #else
@@ -132,7 +130,7 @@ public:
         fcs_ = (*it);
         ++it;
         fcs_ |= (*it) << 8;
-        DEBUG("FCS = %hx", fcs_);
+        TNC_DEBUG("FCS = %hx", fcs_);
         crc_ = compute_crc(data_.begin());
         complete_ = true;
     }
@@ -207,5 +205,3 @@ IoFrame* acquire(void);
 IoFrame* acquire_wait(void);
 
 }}} // mobilinkd::tnc::hdlc
-
-#endif // MOBILINKD__HDLC_FRAME_HPP_

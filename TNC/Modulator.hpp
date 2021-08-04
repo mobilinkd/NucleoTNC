@@ -59,6 +59,8 @@ struct Modulator
      */
     virtual void send(uint8_t symbol) = 0;
 
+    virtual void tone(uint16_t freq) = 0;
+
     /// The next three functions are called by the DAC DMA interrupt handler.
 
     /**

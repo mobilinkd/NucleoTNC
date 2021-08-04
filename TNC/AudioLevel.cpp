@@ -27,7 +27,7 @@ extern DAC_HandleTypeDef hdac1;
 
 namespace mobilinkd { namespace tnc { namespace audio {
 
-uint16_t virtual_ground{0};
+int16_t virtual_ground{0};
 float i_vgnd{0.0f};
 
 void set_input_gain(int level)

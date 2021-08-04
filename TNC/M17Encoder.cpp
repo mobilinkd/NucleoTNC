@@ -1,4 +1,4 @@
-// Copyright 2015-2020 Mobilinkd LLC <rob@mobilinkd.com>
+// Copyright 2015-2021 Mobilinkd LLC <rob@mobilinkd.com>
 // All rights reserved.
 
 #include "M17Encoder.h"
@@ -29,6 +29,7 @@ static osMessageQId m17EncoderInputQueueHandle;
 static osMessageQId m17EncoderOutputQueueHandle;
 
 extern RNG_HandleTypeDef hrng;
+extern IWDG_HandleTypeDef hiwdg;
 
 namespace mobilinkd
 {
@@ -518,6 +519,39 @@ bool M17Encoder::do_csma() {
     return false;
 }
 
+tnc::hdlc::IoFrame* M17Encoder::create_bert_frame() {
+    static PRBS9 prbs;
+
+    std::array<uint8_t, 25> bert_frame;
+
+    uint8_t byte = 0;
+    size_t j = 0;
+    for (size_t i = 0; i != 197; ++i) {
+        byte <<= 1;
+        byte |= prbs.generate();
+        if ((i & 7) == 7) {
+            bert_frame[j] = byte;
+            j += 1;
+            byte = 0;
+        }
+    }
+    byte <<= 3;
+    bert_frame[j] = byte;
+
+    // Encoder, puncture, interleave & randomize.
+    auto encoded = conv_encode(bert_frame, 197);
+    puncture_bytes(encoded, m17_frame, P2);
+    interleaver.interleave(m17_frame);
+    randomizer(m17_frame);
+
+    auto frame = tnc::hdlc::acquire_wait();
+
+    for (auto c : m17::BERT_SYNC) frame->push_back(c);
+    for (auto c : m17_frame) frame->push_back(c);
+
+    return frame;
+}
+
 /*
  * The encoder task is responsible for feeding symbols to the M17 modulator.
  */
@@ -532,6 +566,8 @@ void M17Encoder::encoderTask(void const*)
     {
         osEvent evt = osMessageGet(m17EncoderInputQueueHandle, osWaitForever);
         if (evt.status != osEventMessage) continue;
+
+        HAL_IWDG_Refresh(&hiwdg);
 
         auto frame = static_cast<IoFrame*>(evt.value.p);
         if (frame->size() != 48)

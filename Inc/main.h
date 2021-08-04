@@ -101,6 +101,27 @@
 
 /* USER CODE BEGIN Private defines */
 
+// #define TNC_HAS_LSCO -- Not available on NucleoTNC
+// #define TNC_HAS_SWO -- Not available on NucleoTNC
+#define TNC_HAS_LSE
+// #define TNC_HAS_HSE -- Not available on NucleoTNC
+// #define TNC_HAS_MCO -- Not available on NucleoTNC
+// #define TNC_HAS_BT -- Not available on NucleoTNC
+// #define TNC_HAS_BAT -- Not available on NucleoTNC
+// #define TNC_HAS_USB -- Not available on NucleoTNC
+
+// Compatibility defines
+// #define BATTERY_ADC_HANDLE hadc2
+// #define BATTERY_ADC_CHANNEL ADC_CHANNEL_16
+#define LED_PWM_TIMER_HANDLE htim1
+#define EEPROM_I2C hi2c3
+#define SERIAL_UART huart2
+#define AUDIO_ADC_HANDLE hadc1
+#define AUDIO_ADC_CHANNEL CHANNEL_8
+
+//#define USB_CE_Pin GPIO_PIN_4
+//#define USB_CE_GPIO_Port GPIOB
+
 #define EEPROM_ADDRESS 0xA0
 #define EEPROM_CAPACITY 4096
 #define EEPROM_PAGE_SIZE 32

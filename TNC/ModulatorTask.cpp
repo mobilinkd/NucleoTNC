@@ -1,4 +1,4 @@
-// Copyright 2015 Mobilinkd LLC <rob@mobilinkd.com>
+// Copyright 2015-2021 Mobilinkd LLC <rob@mobilinkd.com>
 // All rights reserved.
 
 #include "ModulatorTask.hpp"
@@ -10,6 +10,7 @@
 #include "AFSKModulator.hpp"
 #include "KissHardware.hpp"
 #include "main.h"
+#include "Log.h"
 
 mobilinkd::tnc::SimplexPTT simplexPtt;
 mobilinkd::tnc::MultiplexPTT multiplexPtt;
@@ -77,6 +78,7 @@ mobilinkd::Encoder& getEncoder()
     case kiss::Hardware::ModemType::M17:
         return m17Encoder;
     default:
+        ERROR("Invalid modem type %d", int(kiss::settings().modem_type));
         CxxErrorHandler();
     }
 }

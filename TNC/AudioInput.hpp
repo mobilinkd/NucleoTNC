@@ -29,10 +29,10 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef*);
  * This is the long-running audio input task/thread.  The ADC can be
  * connected to one of 2 inputs:
  *
- * - AUDIO_IN, ADC1, CHANNEL_8  -- this is the input used by the demodulator.
+ * - AMPLIFIED_AUDIO_IN, ADC1_IN7 -- this is the input used by the demodulator.
  * - BATTERY_VOLTAGE -- this is 1/2 raw battery voltage (nominal 1.6-2.1V).
  *    This input should not be enabled unless BAT_DIVIDER is enabled and
- *    pulled low. *** NOT USED on NucleoTNC ***
+ *    pulled low.
  *
  * These inputs can be measured in a couple of different ways:
  * - Vavg -- for the average DC level of the signal

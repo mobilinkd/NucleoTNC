@@ -42,14 +42,16 @@ int powerOffViaUSB(void)
 
 namespace mobilinkd { namespace tnc { namespace kiss {
 
-#ifdef NUCLEOTNC
-const char FIRMWARE_VERSION[] = "2.3.0";
+#if defined(NUCLEOTNC)
+const char FIRMWARE_VERSION[] = "2.3.2";
 const char HARDWARE_VERSION[] = "Mobilinkd NucleoTNC";
-#else
-const char FIRMWARE_VERSION[] = "2.3.0";
+#elif defined(STM32L433xx)
+const char FIRMWARE_VERSION[] = "2.3.2";
 const char HARDWARE_VERSION[] = "Mobilinkd TNC3 2.1.1";
+#elif defined(STM32L4P5xx)
+const char FIRMWARE_VERSION[] = "2.3.2";
+const char HARDWARE_VERSION[] = "Mobilinkd TNC3+ Rev A";
 #endif
-
 Hardware& settings()
 {
     static Hardware instance __attribute__((section(".bss3")));
@@ -223,7 +225,7 @@ void Hardware::handle_request(hdlc::IoFrame* frame)
         reply8(hardware::SAVE_EEPROM_SETTINGS, hardware::OK);
         break;
     case hardware::POLL_INPUT_LEVEL:
-        DEBUG("POLL_INPUT_VOLUME");
+        TNC_DEBUG("POLL_INPUT_VOLUME");
         reply8(hardware::POLL_INPUT_LEVEL, 0);
         osMessagePut(audioInputQueueHandle, audio::POLL_AMPLIFIED_INPUT_LEVEL,
             osWaitForever);
@@ -231,43 +233,43 @@ void Hardware::handle_request(hdlc::IoFrame* frame)
             osWaitForever);
         break;
     case hardware::STREAM_INPUT_LEVEL:
-        DEBUG("STREAM_INPUT_VOLUME");
+        TNC_DEBUG("STREAM_INPUT_VOLUME");
         osMessagePut(audioInputQueueHandle, audio::STREAM_AMPLIFIED_INPUT_LEVEL,
             osWaitForever);
         break;
     case hardware::GET_BATTERY_LEVEL:
-      DEBUG("GET_BATTERY_LEVEL");
+      TNC_DEBUG("GET_BATTERY_LEVEL");
       osMessagePut(audioInputQueueHandle, audio::POLL_BATTERY_LEVEL,
           osWaitForever);
       osMessagePut(audioInputQueueHandle, audio::DEMODULATOR,
           osWaitForever);
         break;
     case hardware::SEND_MARK:
-        DEBUG("SEND_MARK");
+        TNC_DEBUG("SEND_MARK");
         osMessagePut(audioInputQueueHandle, audio::IDLE,
             osWaitForever);
         getAFSKTestTone().mark();
         break;
     case hardware::SEND_SPACE:
-        DEBUG("SEND_SPACE");
+        TNC_DEBUG("SEND_SPACE");
         osMessagePut(audioInputQueueHandle, audio::IDLE,
             osWaitForever);
         getAFSKTestTone().space();
         break;
     case hardware::SEND_BOTH:
-        DEBUG("SEND_BOTH");
+        TNC_DEBUG("SEND_BOTH");
         osMessagePut(audioInputQueueHandle, audio::IDLE,
             osWaitForever);
         getAFSKTestTone().both();
         break;
     case hardware::STOP_TX:
-        DEBUG("STOP_TX");
+        TNC_DEBUG("STOP_TX");
         getAFSKTestTone().stop();
         osMessagePut(audioInputQueueHandle, audio::IDLE,
             osWaitForever);
         break;
     case hardware::RESET:
-        DEBUG("RESET");
+        TNC_DEBUG("RESET");
         osMessagePut(audioInputQueueHandle, audio::DEMODULATOR,
             osWaitForever);
         break;
@@ -275,21 +277,21 @@ void Hardware::handle_request(hdlc::IoFrame* frame)
         output_gain = *it << 8;
         ++it;
         output_gain += *it;
-        DEBUG("SET_OUTPUT_GAIN = %hd", output_gain);
+        TNC_DEBUG("SET_OUTPUT_GAIN = %hd", output_gain);
         audio::setAudioOutputLevel();
         update_crc();
         [[fallthrough]];
     case hardware::GET_OUTPUT_GAIN:
-        DEBUG("GET_OUTPUT_GAIN");
+        TNC_DEBUG("GET_OUTPUT_GAIN");
         reply16(hardware::GET_OUTPUT_GAIN, output_gain);
         break;
 
     case hardware::STREAM_DCD_VALUE:
-        DEBUG("STREAM_DCD_VALUE");
+        TNC_DEBUG("STREAM_DCD_VALUE");
         break;
 
     case hardware::POLL_INPUT_TWIST:
-      DEBUG("POLL_INPUT_TWIST");
+      TNC_DEBUG("POLL_INPUT_TWIST");
       osMessagePut(audioInputQueueHandle, audio::POLL_TWIST_LEVEL,
           osWaitForever);
       osMessagePut(audioInputQueueHandle, audio::DEMODULATOR,
@@ -297,19 +299,19 @@ void Hardware::handle_request(hdlc::IoFrame* frame)
         break;
 
     case hardware::STREAM_AVG_INPUT_TWIST:
-      DEBUG("STREAM_AVG_INPUT_TWIST");
+      TNC_DEBUG("STREAM_AVG_INPUT_TWIST");
       osMessagePut(audioInputQueueHandle, audio::STREAM_AVERAGE_TWIST_LEVEL,
           osWaitForever);
         break;
 
     case hardware::STREAM_INPUT_TWIST:
-      DEBUG("STREAM_INPUT_TWIST");
+      TNC_DEBUG("STREAM_INPUT_TWIST");
       osMessagePut(audioInputQueueHandle, audio::STREAM_INSTANT_TWIST_LEVEL,
           osWaitForever);
         break;
 
     case hardware::ADJUST_INPUT_LEVELS:
-        DEBUG("ADJUST_INPUT_LEVELS");
+        TNC_DEBUG("ADJUST_INPUT_LEVELS");
         osMessagePut(audioInputQueueHandle, audio::AUTO_ADJUST_INPUT_LEVEL,
             osWaitForever);
         osMessagePut(audioInputQueueHandle, audio::STREAM_AMPLIFIED_INPUT_LEVEL,
@@ -320,7 +322,7 @@ void Hardware::handle_request(hdlc::IoFrame* frame)
         input_gain = *it << 8;
         ++it;
         input_gain += *it;
-        DEBUG("SET_INPUT_GAIN = %d", input_gain);
+        TNC_DEBUG("SET_INPUT_GAIN = %d", input_gain);
         update_crc();
         osMessagePut(audioInputQueueHandle, audio::UPDATE_SETTINGS,
             osWaitForever);
@@ -328,12 +330,12 @@ void Hardware::handle_request(hdlc::IoFrame* frame)
             osWaitForever);
         [[fallthrough]];
     case hardware::GET_INPUT_GAIN:
-        DEBUG("GET_INPUT_GAIN");
+        TNC_DEBUG("GET_INPUT_GAIN");
         reply16(hardware::GET_INPUT_GAIN, input_gain);
         break;
 
     case hardware::SET_INPUT_TWIST:
-        DEBUG("SET_INPUT_TWIST");
+        TNC_DEBUG("SET_INPUT_TWIST");
         rx_twist = *it;
         update_crc();
         osMessagePut(audioInputQueueHandle, audio::UPDATE_SETTINGS,
@@ -342,7 +344,7 @@ void Hardware::handle_request(hdlc::IoFrame* frame)
             osWaitForever);
         [[fallthrough]];
     case hardware::GET_INPUT_TWIST:
-        DEBUG("GET_INPUT_TWIST");
+        TNC_DEBUG("GET_INPUT_TWIST");
         reply8(hardware::GET_INPUT_TWIST, rx_twist);
         break;
 
@@ -350,65 +352,65 @@ void Hardware::handle_request(hdlc::IoFrame* frame)
         tx_twist = *it;
         if (tx_twist < 0) tx_twist = 0;
         if (tx_twist > 100) tx_twist = 100;
-        DEBUG("SET_OUTPUT_TWIST: %d", int(tx_twist));
+        TNC_DEBUG("SET_OUTPUT_TWIST: %d", int(tx_twist));
         getModulator().init(*this);
         update_crc();
         [[fallthrough]];
     case hardware::GET_OUTPUT_TWIST:
-        DEBUG("GET_OUTPUT_TWIST");
+        TNC_DEBUG("GET_OUTPUT_TWIST");
         reply8(hardware::GET_OUTPUT_TWIST, tx_twist);
         break;
 
     case hardware::STREAM_AMPLIFIED_INPUT:
-        DEBUG("STREAM_AMPLIFIED_INPUT");
+        TNC_DEBUG("STREAM_AMPLIFIED_INPUT");
         osMessagePut(audioInputQueueHandle, audio::STREAM_AMPLIFIED_INPUT_LEVEL,
             osWaitForever);
         break;
 
     case hardware::GET_TXDELAY:
-        DEBUG("GET_TXDELAY");
+        TNC_DEBUG("GET_TXDELAY");
         reply8(hardware::GET_TXDELAY, txdelay);
         break;
 
     case hardware::GET_PERSIST:
-        DEBUG("GET_PERSIST");
+        TNC_DEBUG("GET_PERSIST");
         reply8(hardware::GET_PERSIST, ppersist);
         break;
 
     case hardware::GET_TIMESLOT:
-        DEBUG("GET_TIMESLOT");
+        TNC_DEBUG("GET_TIMESLOT");
         reply8(hardware::GET_TIMESLOT, slot);
         break;
 
     case hardware::GET_TXTAIL:
-        DEBUG("GET_TXTAIL");
+        TNC_DEBUG("GET_TXTAIL");
         reply8(hardware::GET_TXTAIL, txtail);
         break;
 
     case hardware::GET_DUPLEX:
-        DEBUG("GET_DUPLEX");
+        TNC_DEBUG("GET_DUPLEX");
         reply8(hardware::GET_DUPLEX, duplex);
         break;
 
     case hardware::GET_FIRMWARE_VERSION:
-        DEBUG("GET_FIRMWARE_VERSION");
+        TNC_DEBUG("GET_FIRMWARE_VERSION");
         reply(hardware::GET_FIRMWARE_VERSION, (uint8_t*) FIRMWARE_VERSION,
           sizeof(FIRMWARE_VERSION) - 1);
         break;
     case hardware::GET_HARDWARE_VERSION:
-        DEBUG("GET_HARDWARE_VERSION");
+        TNC_DEBUG("GET_HARDWARE_VERSION");
         reply(hardware::GET_HARDWARE_VERSION, (uint8_t*) HARDWARE_VERSION,
           sizeof(HARDWARE_VERSION) - 1);
         break;
 
     case hardware::GET_SERIAL_NUMBER:
-        DEBUG("GET_SERIAL_NUMBER");
+        TNC_DEBUG("GET_SERIAL_NUMBER");
         reply(hardware::GET_SERIAL_NUMBER, (uint8_t*) serial_number_64,
             sizeof(serial_number_64) - 1);
         break;
 
     case hardware::SET_PTT_CHANNEL:
-        DEBUG("SET_PTT_CHANNEL");
+        TNC_DEBUG("SET_PTT_CHANNEL");
         if (*it) {
             options &= ~KISS_OPTION_PTT_SIMPLEX;
             osMessagePut(ioEventQueueHandle, CMD_SET_PTT_MULTIPLEX, osWaitForever);
@@ -419,13 +421,13 @@ void Hardware::handle_request(hdlc::IoFrame* frame)
         update_crc();
         break;
     case hardware::GET_PTT_CHANNEL:
-        DEBUG("GET_PTT_CHANNEL");
+        TNC_DEBUG("GET_PTT_CHANNEL");
         reply8(hardware::GET_PTT_CHANNEL,
             options & KISS_OPTION_PTT_SIMPLEX ? 0 : 1);
         break;
 
     case hardware::SET_PASSALL:
-        DEBUG("SET_PASSALL");
+        TNC_DEBUG("SET_PASSALL");
         if (*it) {
           options |= KISS_OPTION_PASSALL;
         } else {
@@ -434,12 +436,12 @@ void Hardware::handle_request(hdlc::IoFrame* frame)
         update_crc();
         [[fallthrough]];
     case hardware::GET_PASSALL:
-        DEBUG("GET_PASSALL");
+        TNC_DEBUG("GET_PASSALL");
         reply8(hardware::GET_PASSALL, options & KISS_OPTION_PASSALL ? 1 : 0);
         break;
 
     case hardware::SET_RX_REV_POLARITY:
-        DEBUG("SET_RX_REV_POLARITY");
+        TNC_DEBUG("SET_RX_REV_POLARITY");
         if (*it) {
           options |= KISS_OPTION_RX_REV_POLARITY;
         } else {
@@ -448,12 +450,12 @@ void Hardware::handle_request(hdlc::IoFrame* frame)
         update_crc();
         [[fallthrough]];
     case hardware::GET_RX_REV_POLARITY:
-        DEBUG("GET_RX_REV_POLARITY");
+        TNC_DEBUG("GET_RX_REV_POLARITY");
         reply8(hardware::GET_RX_REV_POLARITY, options & KISS_OPTION_RX_REV_POLARITY ? 1 : 0);
         break;
 
     case hardware::SET_TX_REV_POLARITY:
-        DEBUG("SET_TX_REV_POLARITY");
+        TNC_DEBUG("SET_TX_REV_POLARITY");
         if (*it) {
           options |= KISS_OPTION_TX_REV_POLARITY;
         } else {
@@ -462,13 +464,13 @@ void Hardware::handle_request(hdlc::IoFrame* frame)
         update_crc();
         [[fallthrough]];
     case hardware::GET_TX_REV_POLARITY:
-        DEBUG("GET_TX_REV_POLARITY");
+        TNC_DEBUG("GET_TX_REV_POLARITY");
         reply8(hardware::GET_TX_REV_POLARITY, options & KISS_OPTION_TX_REV_POLARITY ? 1 : 0);
         break;
 
 #ifndef NUCLEOTNC
     case hardware::SET_USB_POWER_OFF:
-        DEBUG("SET_USB_POWER_OFF");
+        TNC_DEBUG("SET_USB_POWER_OFF");
         if (*it) {
           options |= KISS_OPTION_VIN_POWER_OFF;
         } else {
@@ -477,13 +479,13 @@ void Hardware::handle_request(hdlc::IoFrame* frame)
         update_crc();
         [[fallthrough]];
     case hardware::GET_USB_POWER_OFF:
-        DEBUG("GET_USB_POWER_OFF");
+        TNC_DEBUG("GET_USB_POWER_OFF");
         reply8(hardware::GET_USB_POWER_OFF,
             options & KISS_OPTION_VIN_POWER_OFF ? 1 : 0);
         break;
 
     case hardware::SET_USB_POWER_ON:
-        DEBUG("SET_USB_POWER_ON");
+        TNC_DEBUG("SET_USB_POWER_ON");
         if (*it) {
           options |= KISS_OPTION_VIN_POWER_ON;
         } else {
@@ -492,23 +494,23 @@ void Hardware::handle_request(hdlc::IoFrame* frame)
         update_crc();
         [[fallthrough]];
     case hardware::GET_USB_POWER_ON:
-        DEBUG("GET_USB_POWER_ON");
+        TNC_DEBUG("GET_USB_POWER_ON");
         reply8(hardware::GET_USB_POWER_ON,
             options & KISS_OPTION_VIN_POWER_ON ? 1 : 0);
         break;
 #endif
 
     case hardware::SET_DATETIME:
-        DEBUG("SET_DATETIME");
+        TNC_DEBUG("SET_DATETIME");
         set_rtc_datetime(static_cast<const uint8_t*>(&*it));
         [[fallthrough]];
     case hardware::GET_DATETIME:
-        DEBUG("GET_DATETIME");
+        TNC_DEBUG("GET_DATETIME");
         reply(hardware::GET_DATETIME, get_rtc_datetime(), 7);
         break;
 
     case hardware::GET_CAPABILITIES:
-        DEBUG("GET_CAPABILITIES");
+        TNC_DEBUG("GET_CAPABILITIES");
 #ifndef NUCLEOTNC
         reply16(hardware::GET_CAPABILITIES,
             hardware::CAP_EEPROM_SAVE|hardware::CAP_BATTERY_LEVEL|
@@ -522,7 +524,7 @@ void Hardware::handle_request(hdlc::IoFrame* frame)
         break;
 
     case hardware::GET_ALL_VALUES:
-        DEBUG("GET_ALL_VALUES");
+        TNC_DEBUG("GET_ALL_VALUES");
         // GET_API_VERSION must always come first.
         reply16(hardware::GET_API_VERSION, hardware::KISS_API_VERSION);
 #ifndef NUCLEOTNC
@@ -597,13 +599,13 @@ void Hardware::handle_ext_request(hdlc::IoFrame* frame) {
     switch (ext_command) {
 
     case hardware::EXT_SET_MODEM_TYPE[1]:
-        DEBUG("SET_MODEM_TYPE");
+        TNC_DEBUG("SET_MODEM_TYPE");
         if ((*it == hardware::MODEM_TYPE_1200)
             or (*it == hardware::MODEM_TYPE_9600)
             or (*it == hardware::MODEM_TYPE_M17))
         {
             modem_type = *it;
-            DEBUG(modem_type_lookup[modem_type]);
+            TNC_DEBUG(modem_type_lookup[modem_type]);
             update_crc();
         }
         else
@@ -615,11 +617,11 @@ void Hardware::handle_ext_request(hdlc::IoFrame* frame) {
             osWaitForever);
         [[fallthrough]];
     case hardware::EXT_GET_MODEM_TYPE[1]:
-        DEBUG("EXT_GET_MODEM_TYPE");
+        TNC_DEBUG("EXT_GET_MODEM_TYPE");
         ext_reply(hardware::EXT_GET_MODEM_TYPE, modem_type);
         break;
     case hardware::EXT_GET_MODEM_TYPES[1]:
-        DEBUG("EXT_GET_MODEM_TYPES");
+        TNC_DEBUG("EXT_GET_MODEM_TYPES");
         ext_reply(hardware::EXT_GET_MODEM_TYPES, supported_modem_types);
         break;
     default:
@@ -667,7 +669,7 @@ bool I2C_Storage::load(void* ptr, size_t len)
 {
     if (HAL_I2C_Init(&eeprom_i2c) != HAL_OK) CxxErrorHandler();
 
-    DEBUG("Attempting to read %d bytes from EEPROM...", len);
+    TNC_DEBUG("Attempting to read %d bytes from EEPROM...", len);
 
     uint32_t timeout = 1000;    // systicks... milliseconds
 

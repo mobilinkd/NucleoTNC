@@ -1,4 +1,4 @@
-// Copyright 2016 Rob Riggs <rob@mobilinkd.com>
+// Copyright 2016-2021 Rob Riggs <rob@mobilinkd.com>
 // All rights reserved.
 
 #include "AFSKTestTone.hpp"
@@ -85,8 +85,7 @@ void AFSKTestTone::stop()
 void AFSKTestTone::fill() const
 {
     static State current = State::SPACE;
-    static uint32_t random = 0;
-    static uint8_t counter = 0;
+
 
     switch (state_) {
     case AFSKTestTone::State::NONE:
@@ -104,6 +103,7 @@ void AFSKTestTone::fill() const
     case AFSKTestTone::State::SPACE:
         if (kiss::settings().modem_type == kiss::Hardware::ModemType::M17)
         {
+            getModulator().tone(1);
             getModulator().send(0x22);
         }
         else
@@ -114,17 +114,13 @@ void AFSKTestTone::fill() const
     case AFSKTestTone::State::BOTH:
         if (kiss::settings().modem_type == kiss::Hardware::ModemType::M17)
         {
-            if ((counter & 3) == 0)
-            {
-                auto status = HAL_RNG_GenerateRandomNumber(&hrng, &random);
-                if (status != HAL_OK)
-                {
-                    WARN("RNG failure code %d", status);
+            auto frame = getEncoder().create_bert_frame();
+            if (frame) {
+                for (auto c : *frame) {
+                    getModulator().send(c);
                 }
+                hdlc::release(frame);
             }
-            getModulator().send(random & 0xFF);
-            random >>= 8;
-            counter += 1;
         }
         else
         {
