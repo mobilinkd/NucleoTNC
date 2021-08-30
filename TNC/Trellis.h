@@ -14,13 +14,20 @@ namespace mobilinkd
 {
 
 /// Puncture matrix for linx setup frame.
-inline constexpr auto P1 = std::experimental::make_array<int8_t>(
-    1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0,
-    1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0,
-    1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1,
-    0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1,
-    0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1,
-    1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1);
+inline constexpr std::array<int8_t, 61> make_p1() {
+    std::array<int8_t, 61> result{};
+    for (size_t i = 0, j = 2; i != 61; ++i) {
+        if (i == j) {
+            result[i] = 0;
+            j += 4;
+        } else {
+            result[i] = 1;
+        }
+    }
+    return result;
+};
+
+inline constexpr auto P1 = make_p1();
 
 /// Puncture matrix for audio frames.
 inline constexpr auto P2 = std::experimental::make_array<int8_t>(
