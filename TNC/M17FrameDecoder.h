@@ -425,7 +425,7 @@ struct M17FrameDecoder
         detail::to_frame(stream, output.stream);
         detail::to_bytes(output.packet, stream_segment);
 
-        if ((ber < 70) && (stream_segment[0] & 0x80))
+        if ((ber < 60) && (stream_segment[0] & 0x80))
         {
             INFO("EOS");
             state_ = State::LSF;
