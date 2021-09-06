@@ -425,14 +425,23 @@ struct M17FrameDecoder
         detail::to_frame(stream, output.stream);
         detail::to_bytes(output.packet, stream_segment);
 
+        stream->push_back(0); // Reserved
+
+        // RF signal quality/strength.
+        if (ber < 128) stream->push_back(255 - ber * 2);
+        else stream->push_back(0);
+
         if ((ber < 60) && (stream_segment[0] & 0x80))
         {
             INFO("EOS");
             state_ = State::LSF;
             result = DecodeResult::EOS;
         }
+
+        // Bogus CRC bytes to be dropped.
         stream->push_back(0);
         stream->push_back(0);
+
         stream->source(tnc::hdlc::IoFrame::STREAM);
         return result;
     }

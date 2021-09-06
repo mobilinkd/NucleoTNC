@@ -28,6 +28,7 @@ constexpr std::array<uint8_t, 2> LSF_SYNC = { 0x55, 0xF7 };
 constexpr std::array<uint8_t, 2> STREAM_SYNC = { 0xFF, 0x5D };
 constexpr std::array<uint8_t, 2> PACKET_SYNC = { 0x75, 0xFF };
 constexpr std::array<uint8_t, 2> BERT_SYNC = { 0xDF, 0x55 };
+constexpr std::array<uint8_t, 2> EOT_SYNC = { 0x55, 0x5D };
 
 inline constexpr uint16_t sync_word(std::array<uint8_t, 2> sw)
 {

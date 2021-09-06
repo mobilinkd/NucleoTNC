@@ -378,6 +378,10 @@ void M17Encoder::send_stream(tnc::hdlc::IoFrame* frame, FrameType)
     frame->clear();                     // Re-use existing frame.
     for (auto c : m17::STREAM_SYNC) frame->push_back(c);
     for (auto c : m17_frame) frame->push_back(c);
+    if (state == State::IDLE)
+    {
+        for (auto c : m17::EOT_SYNC) frame->push_back(c);
+    }
 
     auto status = osMessagePut(
         m17EncoderInputQueueHandle,
@@ -570,7 +574,11 @@ void M17Encoder::encoderTask(void const*)
         HAL_IWDG_Refresh(&hiwdg);
 
         auto frame = static_cast<IoFrame*>(evt.value.p);
-        if (frame->size() != 48)
+        if (frame->size() == 50)
+        {
+            INFO("EOT");
+        }
+        else if (frame->size() != 48)
         {
             WARN("Bad frame size %u", frame->size());
         }
