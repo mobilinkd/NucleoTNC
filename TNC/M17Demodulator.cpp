@@ -19,6 +19,8 @@ namespace mobilinkd { namespace tnc {
 //m17::Indicator dcd_indicator{GPIOA, GPIO_PIN_2};
 //m17::Indicator str_indicator{GPIOA, GPIO_PIN_7};
 
+static float scale = 1.f / 2560.f;
+
 void M17Demodulator::start()
 {
     SysClock72();
@@ -29,6 +31,7 @@ void M17Demodulator::start()
     demod_filter.init(m17::rrc_taps_f15);
     passall(kiss::settings().options & KISS_OPTION_PASSALL);
     polarity = kiss::settings().rx_rev_polarity() ? -1 : 1;
+    scale = 1.f / 2560.f * polarity;
     audio::virtual_ground = (VREF + 1) / 2;
 
     hadc1.Init.OversamplingMode = ENABLE;
@@ -57,7 +60,7 @@ void M17Demodulator::update_values(uint8_t index)
 {
     correlator.apply([this,index](float t){dev.sample(t);}, index);
     dev.update();
-    idev = dev.idev() * polarity;
+    idev = dev.idev();
     sync_sample_index = index;
 }
 
@@ -87,9 +90,6 @@ void M17Demodulator::dcd_off()
 
 void M17Demodulator::initialize(const q15_t* input)
 {
-
-    static constexpr float scale = 1.f / 2560.f;
-
     for (size_t i = 0; i != ADC_BLOCK_SIZE; i++) {
         demod_buffer[i] = float(input[i]) * scale;
     }
@@ -450,8 +450,6 @@ hdlc::IoFrame* M17Demodulator::operator()(const q15_t* input)
 
     // Do adc_micro_adjustment() here?
     // adc_micro_adjustment();
-
-    static constexpr float scale = 1.f / 2560.f;
 
     for (size_t i = 0; i != ADC_BLOCK_SIZE; i++) {
         demod_buffer[i] = float(input[i]) * scale;
