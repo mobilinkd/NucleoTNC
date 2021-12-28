@@ -36,8 +36,7 @@ struct FirFilter {
     FirFilter()
     {}
 
-    template <size_t N>
-    FirFilter(std::array<float, N> const& taps)
+    FirFilter(std::array<float, FILTER_SIZE> const& taps)
     {
         init(taps);
     }
@@ -47,8 +46,7 @@ struct FirFilter {
         init(taps);
     }
 
-    template <size_t N>
-    void init(std::array<float, N> const& taps)
+    void init(std::array<float, FILTER_SIZE> const& taps)
     {
         arm_fir_init_f32(&instance, FILTER_SIZE, (float*)taps.data(),
             filter_state, BLOCK_SIZE);
