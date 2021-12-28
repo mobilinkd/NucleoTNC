@@ -28,6 +28,8 @@ struct IirFilter {
 
     static constexpr size_t size() { return N; }
 
+    void reset() { history_.fill(0.0f); }
+
 	float operator()(float input)
 	{
 
