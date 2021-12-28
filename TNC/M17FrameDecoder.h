@@ -361,13 +361,24 @@ struct M17FrameDecoder
         uint8_t fragment_number = tmp.lich[5];   // Get fragment number.
         fragment_number = (fragment_number >> 5) & 7;
 
+        if (fragment_number > 5)
+        {
+            INFO("invalid LICH fragment %d", int(fragment_number));
+            ber = -1;
+            return DecodeResult::INCOMPLETE;        // More to go...
+        }
+
         // Copy decoded LICH to superframe buffer.
         std::copy(tmp.lich.begin(), tmp.lich.begin() + 5,
             output.lich.begin() + (fragment_number * 5));
 
         lich_segments |= (1 << fragment_number);        // Indicate segment received.
         INFO("got segment %d, have %02x", int(fragment_number), int(lich_segments));
-        if (lich_segments != 0x3F) return DecodeResult::INCOMPLETE;        // More to go...
+        if ((lich_segments & 0x3F) != 0x3F)
+        {
+            ber = -1;
+            return DecodeResult::INCOMPLETE;        // More to go...
+        }
 
         crc_.reset();
         for (auto c : output.lich) crc_(c);
