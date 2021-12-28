@@ -211,7 +211,7 @@ struct Viterbi
         size_t min_element = 0;
         int32_t min_cost = prevMetrics[0];
 
-        for (size_t i = 0; i != NumStates; ++i)
+        for (size_t i = 1; i != NumStates; ++i)
         {
             if (prevMetrics[i] < min_cost)
             {
