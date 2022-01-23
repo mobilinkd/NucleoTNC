@@ -13,6 +13,19 @@ build the firmware using the same compiler and linker options.  As
 with most firmware projects, there is a linker script with defines
 the memory layout for for the Flash and SRAM.
 
+## Blaze Dependency
+
+There is a new dependency as of 2.4.3 with the addition of the Kalman
+filter.  The firmware has a dependency on the Blaze C++ math library.
+
+    mkdir blaze
+    ln -s /usr/include/blaze blaze/
+
+This also requires (for now) that the firmware be built with exceptions
+enabled.
+
+## Example GCC Command-line
+
 Below are example compilation and linking lines for reference:
 
     arm-none-eabi-g++ -mcpu=cortex-m4 -mthumb -mfloat-abi=softfp -mfpu=fpv4-sp-d16 -O2 -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -fno-inline-functions -fsingle-precision-constant -fstack-usage -fstrict-aliasing -ffast-math -Wall -Wextra -Wlogical-op -Wfloat-equal -g -D__FPU_PRESENT=1 -DUSE_HAL_DRIVER -DARM_MATH_CM4 -DSTM32L432xx -D__weak=__attribute__((weak)) -DNUCLEOTNC=1 -I../Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc -I/home/rob/workspace/Nucleo_L432KC_TNC/Inc -I/home/rob/workspace/Nucleo_L432KC_TNC/Drivers/STM32L4xx_HAL_Driver/Inc -I/home/rob/workspace/Nucleo_L432KC_TNC/Drivers/CMSIS/Include -I/home/rob/workspace/Nucleo_L432KC_TNC/Drivers/CMSIS/Device/ST/STM32L4xx/Include -I/home/rob/workspace/Nucleo_L432KC_TNC/Middlewares/Third_Party/FreeRTOS/Source/include -I/home/rob/workspace/Nucleo_L432KC_TNC/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS -I/home/rob/workspace/Nucleo_L432KC_TNC/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F -I/home/rob/workspace/Nucleo_L432KC_TNC/TNC -I/usr/arm-none-eabi/include -std=gnu++1z -fabi-version=9 -fno-exceptions -fno-rtti -fno-use-cxa-atexit -fno-threadsafe-statics -Wno-register -c -o TNC/HdlcFrame.o ../TNC/HdlcFrame.cpp 
