@@ -43,7 +43,7 @@ static float dc_block(float x)
 
 void M17Demodulator::start()
 {
-    SysClock72();
+    SysClock48();
 #if defined(HAVE_LSCO)
     HAL_RCCEx_DisableLSCO();
 #endif
@@ -71,7 +71,7 @@ void M17Demodulator::start()
     if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
         CxxErrorHandler();
 
-    startADC(1499, ADC_BLOCK_SIZE);
+    startADC(999, ADC_BLOCK_SIZE);
 //    getModulator().start_loopback();
     dcd_off();
 }
