@@ -120,7 +120,7 @@ osMessageQId dacOutputQueueHandle;
 uint8_t dacOutputQueueBuffer[ 128 * sizeof( uint8_t ) ];
 osStaticMessageQDef_t dacOutputQueueControlBlock;
 osMessageQId adcInputQueueHandle;
-uint8_t adcInputQueueBuffer[ 3 * sizeof( uint32_t ) ];
+uint8_t adcInputQueueBuffer[ 8 * sizeof( uint32_t ) ];
 osStaticMessageQDef_t adcInputQueueControlBlock;
 
 /* USER CODE BEGIN PV */
