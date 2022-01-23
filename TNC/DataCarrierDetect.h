@@ -68,7 +68,7 @@ struct DataCarrierDetect
         triggered_ = triggered_ ? level_ > ltrigger_ : level_ > htrigger_;
     }
 
-
+    void unlock() { triggered_ = false; }
     FloatType level() const { return level_; }
     bool dcd() const { return triggered_; }
 };
