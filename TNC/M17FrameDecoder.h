@@ -442,12 +442,14 @@ struct M17FrameDecoder
         if (ber < 128) stream->push_back(255 - ber * 2);
         else stream->push_back(0);
 
+#if 0 // Using EOT sync word now
         if ((ber < 60) && (stream_segment[0] & 0x80))
         {
             INFO("EOS");
             state_ = State::LSF;
             result = DecodeResult::EOS;
         }
+#endif
 
         // Bogus CRC bytes to be dropped.
         stream->push_back(0);
