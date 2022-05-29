@@ -1,129 +1,142 @@
-// Copyright 2021 Rob Riggs <rob@mobilinkd.com>
+// Copyright 2021-2022 Rob Riggs <rob@mobilinkd.com>
 // All rights reserved.
 
 #pragma once
 
-#include "IirFilter.hpp"
+#include "KalmanFilter.h"
+#include "StandardDeviation.hpp"
 
-#include <algorithm>
-#include <array>
 #include <cmath>
 #include <cstddef>
 
 namespace mobilinkd { namespace m17 {
-
-/**
- * Deviation and zero-offset estimator.
- *
- * Accepts samples which are periodically used to update estimates of the
- * input signal deviation and zero offset.
- *
- * Samples must be provided at the ideal sample point (the point with the
- * peak bit energy).
- *
- * Estimates are expected to be updated at each sync word.  But they can
- * be updated more frequently, such as during the preamble.
- */
-template <typename FloatType>
+template <typename FloatType, size_t SYNC_WORD_LEN = 8>
 class FreqDevEstimator
 {
-    using sample_filter_t = tnc::IirFilter<3>;
+    static constexpr FloatType DEVIATION = 1.;
 
-    // IIR with Nyquist of 1/4.
-    static constexpr std::array<float, 3> dc_b = { 0.09763107,  0.19526215,  0.09763107 };
-    static constexpr std::array<float, 3> dc_a = { 1.        , -0.94280904,  0.33333333 };
-
-    static constexpr FloatType MAX_DC_ERROR = 0.2;
-
-    FloatType min_est_ = 0.0;
-	FloatType max_est_ = 0.0;
-	FloatType min_cutoff_ = 0.0;
-	FloatType max_cutoff_ = 0.0;
-	FloatType min_var_ = 0.0;
-	FloatType max_var_ = 0.0;
-	size_t min_count_ = 1;
-	size_t max_count_ = 1;
-	FloatType deviation_ = 0.0;
-	FloatType offset_ = 0.0;
-	FloatType error_ = 0.0;
-	FloatType idev_ = 1.0;
-    sample_filter_t dc_filter_{dc_b, dc_a};
+    SymbolKalmanFilter<FloatType> minFilter_;
+    SymbolKalmanFilter<FloatType> maxFilter_;
+    RunningStandardDeviation<FloatType, 184> stddev_;
+    FloatType idev_ = 1.;
+    FloatType offset_ = 0.;
+    uint8_t count_ = 0;
+    FloatType min_ = 0.;
+    FloatType max_ = 0.;
+    uint8_t minCount_ = 0;
+    uint8_t maxCount_ = 0;
+    size_t updateCount_ = 0;
+    bool reset_ = true;
 
 public:
 
-	void reset()
-	{
-		min_est_ = 0.0;
-		max_est_ = 0.0;
-		min_var_ = 0.0;
-		max_var_ = 0.0;
-		min_count_ = 1;
-		max_count_ = 1;
-		min_cutoff_ = 0.0;
-		max_cutoff_ = 0.0;
-	}
+    void reset()
+    {
+        idev_ = 1.;
+        offset_ = 0.;
+        count_ = 0;
+        min_ = 0.;
+        max_ = 0.;
+        minCount_ = 0;
+        maxCount_ = 0;
+        updateCount_ = 0;
+        stddev_.reset();
+        reset_ = true;
+    }
 
-	void sample(FloatType sample)
-	{
-		if (sample < 1.5 * min_est_)
-		{
-			min_count_ = 1;
-			min_est_ = sample;
-			min_var_ = 0.0;
-			min_cutoff_ = min_est_ * 0.666666;
-		}
-		else if (sample < min_cutoff_)
-		{
-			min_count_ += 1;
-			min_est_ += sample;
-			FloatType var = (min_est_ / min_count_) - sample;
-			min_var_ += var * var;
-		}
-		else if (sample > 1.5 * max_est_)
-		{
-			max_count_ = 1;
-			max_est_ = sample;
-			max_var_ = 0.0;
-			max_cutoff_ = max_est_ * 0.666666;
-		}
-		else if (sample > max_cutoff_)
-		{
-			max_count_ += 1;
-			max_est_ += sample;
-			FloatType var = (max_est_ / max_count_) - sample;
-			max_var_ += var * var;
-		}
-	}
+    /**
+     * This function takes the index samples from the correlator to build
+     * the outer symbol samples for the frequency offset (signal DC offset)
+     * and the deviation (signal magnitude). It expects bursts of 8 samples,
+     * one for each symbol in a sync word.
+     *
+     * @param sample
+     */
+    void sample(FloatType sample)
+    {
+        count_ += 1;
 
-	/**
-	 * Update the estimates for deviation, offset, and EVM (error).  Note
-	 * that the estimates for error are using a sloppy implementation for
-	 * calculating variance to reduce the memory requirements.  This is
-	 * because this is designed for embedded use.
-	 */
-	void update()
-	{
-		if (max_count_ < 2 || min_count_ < 2) return;
-		FloatType max_ = max_est_ / max_count_;
-		FloatType min_ = min_est_ / min_count_;
-		deviation_ = (max_ - min_) / 6.0;
-		if (deviation_ > 0) idev_ = 1.0 / deviation_;
-		offset_ =  dc_filter_(std::max(std::min(max_ + min_, deviation_ * MAX_DC_ERROR), deviation_ * -MAX_DC_ERROR));
-		error_ = (std::sqrt(max_var_ / (max_count_ - 1)) + std::sqrt(min_var_ / (min_count_ - 1))) * 0.5 * idev_;
-		min_cutoff_ = offset_ - deviation_ * 2;
-		max_cutoff_ = offset_ + deviation_ * 2;
-		max_est_ = max_;
-		min_est_ = min_;
-		max_count_ = 1;
-		min_count_ = 1;
-		max_var_ = 0.0;
-		min_var_ = 0.0;
-	}
+        if (sample < 0)
+        {
+            minCount_ += 1;
+            min_ += sample;
+        }
+        else
+        {
+            maxCount_ += 1;
+            max_ += sample;
+        }
 
-	FloatType deviation() const { return deviation_; }
-	FloatType offset() const { return offset_; }
-	FloatType error() const { return error_; }
-	FloatType idev() const { return idev_; }
+        if (count_ == SYNC_WORD_LEN)
+        {
+            auto minAvg = min_ / minCount_;
+            auto maxAvg = max_ / maxCount_;
+            if (reset_)
+            {
+                minFilter_.reset(minAvg);
+                maxFilter_.reset(maxAvg);
+                idev_ = 6.0 / (maxAvg - minAvg);
+                offset_ = maxAvg + minAvg;
+                reset_ = false;
+            }
+            else
+            {
+                auto minFiltered = minFilter_.update(minAvg, count_ + updateCount_);
+                auto maxFiltered = maxFilter_.update(maxAvg, count_ + updateCount_);
+                idev_ = 6.0 / (maxFiltered[0] - minFiltered[0]);
+                offset_ = maxFiltered[0] + minFiltered[0];
+            }
+
+            count_ = 0;
+            updateCount_ = 0;
+            min_ = 0.;
+            max_ = 0.;
+            minCount_ = 0;
+            maxCount_ = 0;
+        }
+    }
+
+    FloatType normalize(FloatType sample) const
+    {
+        return (sample - offset_) * idev_;
+    }
+
+    FloatType evm() const { return stddev_.stdev(); }
+
+    void update() const {}
+
+    /**
+     * Capture EVM of a symbol.
+     *
+     * @param sample is a normalized sample captured at the best sample point.
+     */
+    void update(FloatType sample)
+    {
+        if (sample > 2)
+        {
+            stddev_.capture(sample - 3);
+        }
+        else if (sample > 0)
+        {
+            stddev_.capture(sample - 1);
+        }
+        else if (sample > -2)
+        {
+            stddev_.capture(sample + 1);
+        }
+        else
+        {
+            stddev_.capture(sample + 3);
+        }
+
+        updateCount_ += 1;
+    }
+
+    FloatType idev() const { return idev_; }
+    FloatType offset() const { return offset_; }
+    FloatType deviation() const { return DEVIATION / idev_; }
+    FloatType error() const { return evm(); }
 };
+
 
 }} // mobilinkd::m17

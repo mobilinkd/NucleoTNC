@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Rob Riggs <rob@mobilinkd.com>
+// Copyright 2020-2022 Rob Riggs <rob@mobilinkd.com>
 // All rights reserved.
 
 #pragma GCC diagnostic push
@@ -23,7 +23,7 @@ namespace mobilinkd { namespace tnc {
 //m17::Indicator dcd_indicator{GPIOA, GPIO_PIN_2};
 //m17::Indicator str_indicator{GPIOA, GPIO_PIN_7};
 
-static float scale = 1.f / 2560.f;
+static float scale = 1.f / 32768.f;
 
 static float dc_block(float x)
 {
@@ -51,8 +51,8 @@ void M17Demodulator::start()
     demod_filter.init(m17::rrc_taps_f);
     passall(kiss::settings().options & KISS_OPTION_PASSALL);
     polarity = kiss::settings().rx_rev_polarity() ? -1 : 1;
-    scale = 1.f / 2560.f * polarity;
-    // audio::virtual_ground = (VREF + 1) / 2;
+    scale = 1.f / 32768.f * polarity;
+    audio::virtual_ground = (VREF + 1) / 2;
 
     hadc1.Init.OversamplingMode = ENABLE;
     if (HAL_ADC_Init(&hadc1) != HAL_OK)
@@ -76,11 +76,26 @@ void M17Demodulator::start()
     dcd_off();
 }
 
+/**
+ * Update the deviation & offset from the stored correlator samples. This is
+ * called after a sync word has been detected.
+ *
+ * @pre @p sample_index is the best estimate of the sample point and has
+ *  been set, either by the clock recovery system or from a sync word if
+ *  the demodulator was in an unlocked state.
+ *
+ * @post @p dev has been updated with the latest sync word samples. And
+ *  @p sync_sample_index is set to the current sync word tigger point.
+ *
+ * @param index is the current sync word trigger point.
+ */
 void M17Demodulator::update_values(uint8_t index)
 {
-    correlator.apply([this,index](float t){dev.sample(t);}, index);
+    // For deviation and offset to be accurate, this must be the stable
+    // sample_index. The sync word trigger point is too noisy, resulting
+    // in inaccurate frequency offset and deviation estimates.
+    correlator.apply([this,index](float t){dev.sample(t);}, sample_index);
     dev.update();
-    idev = dev.idev();
     sync_sample_index = index;
 }
 
@@ -89,20 +104,23 @@ void M17Demodulator::dcd_on()
     // Data carrier newly detected.
     INFO("dcd = %d", int(dcd.level() * 1000));
     dcd_ = true;
-    sync_count = 0;
-    dev.reset();
-    framer.reset();
-    decoder.reset();
-    missing_sync_count = 0;
+    if (demodState == DemodState::UNLOCKED)
+    {
+        sync_count = 0;
+        missing_sync_count = 0;
+
+        dev.reset();
+        framer.reset();
+        decoder.reset();
+    }
 }
 
 void M17Demodulator::dcd_off()
 {
     // Just lost data carrier.
     INFO("dcd = %d", int(dcd.level() * 1000));
-    dcd_ = false;
     demodState = DemodState::UNLOCKED;
-    adc_timing_adjust = 0;
+    dcd_ = false;
 }
 
 void M17Demodulator::initialize(const q15_t* input)
@@ -154,8 +172,8 @@ void M17Demodulator::do_unlocked()
             missing_sync_count = 0;
             need_clock_reset_ = true;
             dev.reset();
-            update_values(sync_index);
             sample_index = sync_index;
+            update_values(sync_index);
             demodState = DemodState::LSF_SYNC;
             INFO("P sync %d", sync_index);
         }
@@ -166,12 +184,12 @@ void M17Demodulator::do_unlocked()
     auto sync_updated = lsf_sync.updated();
     if (sync_updated)
     {
-        sync_count = 0;
+        sync_count = MAX_SYNC_COUNT;
         missing_sync_count = 0;
         need_clock_reset_ = true;
         dev.reset();
-        update_values(sync_index);
         sample_index = sync_index;
+        update_values(sync_index);
         demodState = DemodState::FRAME;
         if (sync_updated < 0)
         {
@@ -188,12 +206,12 @@ void M17Demodulator::do_unlocked()
     sync_updated = packet_sync.updated();
     if (sync_updated < 0)
     {
-        sync_count = 0;
+        sync_count = MAX_SYNC_COUNT;
         missing_sync_count = 0;
         need_clock_reset_ = true;
         dev.reset();
-        update_values(sync_index);
         sample_index = sync_index;
+        update_values(sync_index);
         demodState = DemodState::FRAME;
         sync_word_type = M17FrameDecoder::SyncWordType::BERT;
         INFO("B sync %d", int(sync_index));
@@ -217,6 +235,7 @@ void M17Demodulator::do_lsf_sync()
         // INFO("PSync = %d", int(sync_triggered));
         if (sync_triggered > 0.1)
         {
+            need_clock_update_ = true;
             sync_count += 1;
             return;
         }
@@ -225,6 +244,7 @@ void M17Demodulator::do_lsf_sync()
         if (bert_triggered < 0)
         {
             missing_sync_count = 0;
+            sync_count = MAX_SYNC_COUNT;
             need_clock_update_ = true;
             update_values(sample_index);
             demodState = DemodState::FRAME;
@@ -234,6 +254,7 @@ void M17Demodulator::do_lsf_sync()
         else if (std::abs(sync_triggered) > 0.1)
         {
             missing_sync_count = 0;
+            sync_count = MAX_SYNC_COUNT;
             need_clock_update_ = true;
             update_values(sample_index);
             INFO("LSync = %d", int(sync_triggered));
@@ -253,15 +274,17 @@ void M17Demodulator::do_lsf_sync()
         else if (++missing_sync_count > 192)
         {
             if (sync_count >= 10) {
+                // Long preamble. Update clock and continue waiting for LSF.
                 missing_sync_count = 0;
                 need_clock_update_ = true;
                 INFO("long preamble");
             } else {
+                // No sync word. Recycle.
                 sync_count = 0;
                 demodState = DemodState::UNLOCKED;
+                missing_sync_count = 0;
                 dcd.unlock();
                 INFO("l unlock %d", int(missing_sync_count));
-                missing_sync_count = 0;
             }
         }
         else
@@ -283,14 +306,18 @@ void M17Demodulator::do_stream_sync()
     static bool eot_flag = false;
 
     sync_count += 1;
-    if (sync_count < MIN_SYNC_INDEX) {
+    if (sync_count < MIN_SYNC_COUNT) {
         return;
     }
 
-    if (eot_sync.triggered(correlator) > 0.1) {
+    if (eot_sync.triggered(correlator) > EOT_TRIGGER_LEVEL) {
+        // Note the EOT flag but continue trying to decode. This is needed
+        // to avoid false triggers. If it is a true EOT, the stream will
+        // end the next time we try to capture a sync word.
         sync_word_type = M17FrameDecoder::SyncWordType::STREAM;
         demodState = DemodState::FRAME;
         eot_flag = true;
+        missing_sync_count = 0;
         INFO("EOT");
         return;
     }
@@ -302,28 +329,31 @@ void M17Demodulator::do_stream_sync()
         missing_sync_count = 0;
         update_values(sync_index);
         sync_word_type = M17FrameDecoder::SyncWordType::STREAM;
-        demodState = DemodState::FRAME;
+        demodState = DemodState::SYNC_WAIT;
         INFO("s sync %d", int(sync_count));
         eot_flag = false;
     }
-    else if (sync_count > MAX_SYNC_INDEX)
+    else if (sync_count > MAX_SYNC_COUNT)
     {
-        // update_values(sync_index);
-        if (ber >= 0 && ber < 80)
+        if (ber >= 0 && ber < STREAM_COST_LIMIT)
         {
-            // Sync word missed but we are still decoding a stream reasonably well.
+            // Sync word missed but we are still decoding a stream reasonably
+            // well. Don't increment the missing sync count, but it must not
+            // be 0 when a sync word is missed for clock recovery to work.
+            if (!missing_sync_count) missing_sync_count = 1;
             sync_word_type = M17FrameDecoder::SyncWordType::STREAM;
             demodState = DemodState::FRAME;
-            if (!missing_sync_count) missing_sync_count = 1;
             INFO("s bunsync");
         }
         else if (eot_flag) {
+            // EOT flag set, missing sync, and very high BER. Stream has ended.
             demodState = DemodState::UNLOCKED;
             dcd.unlock();
             INFO("s eot");
         }
         else if (missing_sync_count < MAX_MISSING_SYNC)
         {
+            // Sync word missed, very high error rate. Still trying to decode.
             missing_sync_count += 1;
             sync_word_type = M17FrameDecoder::SyncWordType::STREAM;
             demodState = DemodState::FRAME;
@@ -331,6 +361,7 @@ void M17Demodulator::do_stream_sync()
         }
         else
         {
+            // No EOT, but too many sync words missed.  Recycle.
             demodState = DemodState::UNLOCKED;
             dcd.unlock();
             INFO("s unlock");
@@ -347,7 +378,7 @@ void M17Demodulator::do_stream_sync()
 void M17Demodulator::do_packet_sync()
 {
     sync_count += 1;
-    if (sync_count < MIN_SYNC_INDEX) {
+    if (sync_count < MIN_SYNC_COUNT) {
         return;
     }
 
@@ -359,27 +390,31 @@ void M17Demodulator::do_packet_sync()
         missing_sync_count = 0;
         update_values(sync_index);
         sync_word_type = M17FrameDecoder::SyncWordType::PACKET;
-        demodState = DemodState::FRAME;
+        demodState = DemodState::SYNC_WAIT;
         INFO("k sync");
-        return;
     }
-    else if (sync_count > MAX_SYNC_INDEX)
+    else if (sync_count > MAX_SYNC_COUNT)
     {
-        missing_sync_count += 1;
-        if (missing_sync_count < MAX_MISSING_SYNC)
+        if (ber >= 0 && ber < PACKET_COST_LIMIT)
         {
-            sync_word_type = M17FrameDecoder::SyncWordType::PACKET;
-            demodState = DemodState::FRAME;
-            INFO("k unsync");
-        }
-        else if (ber >= 0 && ber < 80)
-        {
+            // Sync word missed but we are still decoding reasonably well.
+            if (!missing_sync_count) missing_sync_count = 1;
             sync_word_type = M17FrameDecoder::SyncWordType::PACKET;
             demodState = DemodState::FRAME;
             INFO("k bunsync");
         }
+        else if (missing_sync_count < MAX_MISSING_SYNC)
+        {
+            // Sync word missed, very high error rate. Still trying to decode.
+            // This may not be appropriate for packet mode.
+            missing_sync_count += 1;
+            sync_word_type = M17FrameDecoder::SyncWordType::PACKET;
+            demodState = DemodState::FRAME;
+            INFO("k unsync");
+        }
         else
         {
+            // Too many sync words missed. Recycle.
             demodState = DemodState::UNLOCKED;
             dcd.unlock();
             INFO("k unlock");
@@ -394,7 +429,7 @@ void M17Demodulator::do_packet_sync()
 void M17Demodulator::do_bert_sync()
 {
     sync_count += 1;
-    if (sync_count < MIN_SYNC_INDEX) {
+    if (sync_count < MIN_SYNC_COUNT) {
         return;
     }
 
@@ -407,22 +442,24 @@ void M17Demodulator::do_bert_sync()
         update_values(sync_index);
         sync_word_type = M17FrameDecoder::SyncWordType::BERT;
         INFO("b sync");
-        demodState = DemodState::FRAME;
+        demodState = DemodState::SYNC_WAIT;
     }
-    else if (sync_count > MAX_SYNC_INDEX)
+    else if (sync_count > MAX_SYNC_COUNT)
     {
-        missing_sync_count += 1;
-        if (missing_sync_count < MAX_MISSING_SYNC)
+        if (ber >= 0 && ber < STREAM_COST_LIMIT)
         {
-            sync_word_type = M17FrameDecoder::SyncWordType::BERT;
-            demodState = DemodState::FRAME;
-            INFO("b unsync");
-        }
-        else if (ber >= 0 && ber < 80)
-        {
+            // Sync word missed but we are still decoding a stream reasonably well.
+            if (!missing_sync_count) missing_sync_count = 1;
             sync_word_type = M17FrameDecoder::SyncWordType::BERT;
             demodState = DemodState::FRAME;
             INFO("b bunsync");
+        }
+        else if (missing_sync_count < MAX_MISSING_SYNC)
+        {
+            missing_sync_count += 1;
+            sync_word_type = M17FrameDecoder::SyncWordType::BERT;
+            demodState = DemodState::FRAME;
+            INFO("b unsync");
         }
         else
         {
@@ -433,24 +470,53 @@ void M17Demodulator::do_bert_sync()
     }
 }
 
+/**
+ * Wait for the sync_count to hit MAX_SYNC_COUNT. This is necessary for
+ * proper timing. Otherwise we can be off by 1 byte if the sync arrives
+ * a bit early. This may happen due to timing mismatch or noise causing
+ * the sync word correlator to trigger early.
+ */
+[[gnu::noinline]]
+void M17Demodulator::do_sync_wait()
+{
+    if (sync_count < MAX_SYNC_COUNT)
+    {
+        sync_count += 1;
+        return;
+    }
+
+    need_clock_update_ = true;
+    demodState = DemodState::FRAME;
+}
+
 [[gnu::noinline]]
 void M17Demodulator::do_frame(float filtered_sample, hdlc::IoFrame*& frame_result)
 {
+    // Only do this when there is no chance of skipping a sample. So do
+    // this update as far from the sample point as possible. It should
+    // only ever change by +/- 1.
+    if (abs(int(sample_index - correlator.index())) == (SAMPLES_PER_SYMBOL / 2))
+    {
+        clock_recovery.update();
+        sample_index = clock_recovery.sample_index();
+        return;
+    }
+
     if (correlator.index() != sample_index) return;
 
-    float sample = filtered_sample - dev.offset();
-    sample *= idev;
+    float sample = dev.normalize(filtered_sample);
+    dev.update(sample);
 
     auto n = mobilinkd::llr<float, 4>(sample);
     int8_t* tmp;
     auto len = framer(n, &tmp);
     if (len != 0)
     {
-        need_clock_update_ = true;
+        sync_count = 0;
 
         std::copy(tmp, tmp + len, buffer.begin());
         auto valid = decoder(sync_word_type, buffer, frame_result, ber);
-        INFO("demod: %d, dt: %7d, evma: %5d, dev: %5d, freq: %5d, dcd: %d, index: %d, %d ber: %d",
+        INFO("demod: %d, dt: %4dppm, evma: %5d‰, dev: %5d, freq: %5d, dcd: %d, index: %d, %d ber: %d",
             int(decoder.state()), int(clock_recovery.clock_estimate() * 1000000),
             int(dev.error() * 1000), int(dev.deviation() * 1000),
             int(dev.offset() * 1000), int(dcd.level() * 1000),
@@ -474,8 +540,6 @@ void M17Demodulator::do_frame(float filtered_sample, hdlc::IoFrame*& frame_resul
             break;
         }
 
-        sync_count = 0;
-
         switch (valid)
         {
         case M17FrameDecoder::DecodeResult::FAIL:
@@ -485,10 +549,6 @@ void M17Demodulator::do_frame(float filtered_sample, hdlc::IoFrame*& frame_resul
                hdlc::release(frame_result);
                frame_result = nullptr;
             }
-            break;
-        case M17FrameDecoder::DecodeResult::EOS:
-            // demodState = DemodState::LSF_SYNC;
-            INFO("EOS");
             break;
         case M17FrameDecoder::DecodeResult::OK:
             break;
@@ -549,24 +609,14 @@ hdlc::IoFrame* M17Demodulator::operator()(const q15_t* input)
             }
             else if (need_clock_update_) // must avoid update immediately after reset.
             {
-                if (!missing_sync_count) {
-                    // Have a real sync word match.
-                    clock_recovery.update(sync_sample_index);
-                } else if (decoder.state() != M17FrameDecoder::State::LSF) {
-                    // Not waiting on clock recovery.
-                    clock_recovery.update();
-                }
-                sample_index = clock_recovery.sample_index();
+                // We have a valid sync word. Update the filter.
+                clock_recovery.update(sync_sample_index);
                 need_clock_update_ = false;
             }
         }
 
+        // Do this here, after the potential clock recovery reset above.
         clock_recovery(filtered_sample);
-
-        if (demodState != DemodState::UNLOCKED && correlator.index() == sample_index)
-        {
-            dev.sample(filtered_sample);
-        }
 
         switch (demodState)
         {
@@ -587,6 +637,9 @@ hdlc::IoFrame* M17Demodulator::operator()(const q15_t* input)
             break;
         case DemodState::BERT_SYNC:
             do_bert_sync();
+            break;
+        case DemodState::SYNC_WAIT:
+            do_sync_wait();
             break;
         case DemodState::FRAME:
             do_frame(filtered_sample,frame_result);

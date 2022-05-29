@@ -161,7 +161,7 @@ struct M17FrameDecoder
 
     enum class State {LSF, STREAM, BASIC_PACKET, FULL_PACKET, BERT};
     enum class SyncWordType { LSF, STREAM, PACKET, BERT };
-    enum class DecodeResult { FAIL, OK, EOS, INCOMPLETE };
+    enum class DecodeResult { FAIL, OK, INCOMPLETE };
 
     State state_ = State::LSF;
 
@@ -282,7 +282,6 @@ struct M17FrameDecoder
     {
         depuncture(buffer, tmp.lsf, P1);
         ber = viterbi_.decode(tmp.lsf, output.lsf);
-        ber = ber > 60 ? ber - 60 : 0;
         detail::to_bytes(output.lsf, current_lsf);
         crc_.reset();
         for (auto c : current_lsf) crc_(c);
@@ -441,15 +440,6 @@ struct M17FrameDecoder
         // RF signal quality/strength.
         if (ber < 128) stream->push_back(255 - ber * 2);
         else stream->push_back(0);
-
-#if 0 // Using EOT sync word now
-        if ((ber < 60) && (stream_segment[0] & 0x80))
-        {
-            INFO("EOS");
-            state_ = State::LSF;
-            result = DecodeResult::EOS;
-        }
-#endif
 
         // Bogus CRC bytes to be dropped.
         stream->push_back(0);
@@ -616,17 +606,17 @@ struct M17FrameDecoder
      * When in STREAM mode, the state machine can transition to either:
      *
      *  - STREAM when a any stream frame is received.
-     *  - LSF when the EOS indicator is set, or when a packet frame is received.
+     *  - LSF when reset().
      *
      * When in BASIC_PACKET mode, the state machine can transition to either:
      *
      *  - BASIC_PACKET when any packet frame is received.
-     *  - LSF when the EOS indicator is set, or when a stream frame is received.
+     *  - LSF when a complete paket superframe is received.
      *
      * When in FULL_PACKET mode, the state machine can transition to either:
      *
      *  - FULL_PACKET when any packet frame is received.
-     *  - LSF when the EOS indicator is set, or when a stream frame is received.
+     *  - LSF when a complete packet superframe is received.
      */
     [[gnu::noinline]]
     DecodeResult operator()(SyncWordType frame_type, buffer_t& buffer,

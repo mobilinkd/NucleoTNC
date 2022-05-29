@@ -1,4 +1,4 @@
-// Copyright 2020 Mobilinkd LLC <rob@mobilinkd.com>
+// Copyright 2020-2022 Mobilinkd LLC <rob@mobilinkd.com>
 // All rights reserved.
 
 #pragma once
@@ -53,6 +53,34 @@ struct StandardDeviation
     float SNR() const
     {
         return 10.0 * log10(mean / stdev());
+    }
+};
+
+template <typename FloatType, size_t N>
+struct RunningStandardDeviation
+{
+    FloatType S{1.0};
+    FloatType alpha{1.0 / N};
+
+    void reset()
+    {
+        S = 0.0;
+    }
+
+    void capture(float sample)
+    {
+        S -= S * alpha;
+        S += (sample * sample) * alpha;
+    }
+
+    FloatType variance() const
+    {
+        return S;
+    }
+
+    FloatType stdev() const
+    {
+        return std::sqrt(variance());
     }
 };
 
